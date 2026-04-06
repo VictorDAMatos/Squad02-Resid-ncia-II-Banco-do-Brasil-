@@ -1,4 +1,5 @@
 from fastapi import FastAPI, HTTPException, Query
+from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
 from typing import Optional
 import sqlite3
@@ -215,6 +216,28 @@ def conversar_com_ia(chat: DadosChat):
     finally:
         conexao.close()
 
+# DOCUMENTAÇÃO SCALAR
+
+@app.get("/scalar", include_in_schema=False)
+def documentacao_scalar():
+    html_content = """
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <title>API Banco do Brasil - Documentação</title>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <style>
+          body { margin: 0; padding: 0; }
+        </style>
+      </head>
+      <body>
+        <script id="api-reference" data-url="/openapi.json"></script>
+        <script src="https://cdn.jsdelivr.net/npm/@scalar/api-reference"></script>
+      </body>
+    </html>
+    """
+    return HTMLResponse(content=html_content)
 
 if __name__ == "__main__":
     import uvicorn
