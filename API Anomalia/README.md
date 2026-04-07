@@ -7,7 +7,7 @@ Esta é uma API desenvolvida em **FastAPI** com banco de dados **SQLite**, proje
 - **FastAPI** (Framework da API)
 - **Uvicorn** (Servidor ASGI)
 - **SQLite3** (Banco de Dados Relacional)
-- **Scalar** (Documentação visual Premium)
+- **Scalar** (Documentação Visual)
 
 ## ⚙️ Como executar o projeto localmente
 
