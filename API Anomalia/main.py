@@ -51,7 +51,10 @@ def inicializar_banco_ia():
         CREATE TABLE IF NOT EXISTS Cliente (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             nome TEXT NOT NULL,
-            cpf TEXT UNIQUE NOT NULL
+            cpf TEXT UNIQUE NOT NULL,
+            email TEXT UNIQUE NOT NULL,
+            telefone TEXT NOT NULL,
+            data_nascimento TEXT NOT NULL
         )
     ''')
     cursor.execute('''
@@ -72,6 +75,7 @@ inicializar_banco_ia()
 
 
 # MODELOS DE DADOS (Pydantic)
+from pydantic import BaseModel, Field
 
 class Transacao(BaseModel):
     valor: float
@@ -84,8 +88,11 @@ class Transacao(BaseModel):
     dispositivo: str
 
 class DadosCliente(BaseModel):
-    nome: str
-    cpf: str
+    nome: str = Field(..., min_length=3, description="Nome completo do cliente")
+    cpf: str = Field(..., min_length=11, max_length=14, description="CPF (com ou sem pontuação)")
+    email: str = Field(..., description="E-mail válido do cliente")
+    telefone: str = Field(..., description="Telefone com DDD")
+    data_nascimento: str = Field(..., description="Data de nascimento (YYYY-MM-DD)")
 
 class DadosChat(BaseModel):
     cliente_id: int
@@ -154,37 +161,67 @@ def buscar_transacao_por_id(id: int):
         raise HTTPException(status_code=404, detail="Transação não encontrada")
     return dict(resultado)
 
+
 @app.get("/anomalies", tags=["🚨 Segurança e Anomalias"], summary="Detectar movimentações suspeitas")
 def detectar_anomalias():
     conexao = sqlite3.connect('banco_brasil_transacoes.sqlite')
     conexao.row_factory = sqlite3.Row
     cursor = conexao.cursor()
+
+   # Regras
+
     query_anomalias = '''
-        SELECT * FROM transactions
-        WHERE valor > 10000 OR hora BETWEEN '00:00' AND '05:00'
-    '''
+                      SELECT *,
+                             CASE
+                                 WHEN valor > 10000 THEN 'Regra 1: Valor extremamente alto (> R$ 10.000)'
+                                 WHEN hora BETWEEN '00:00' AND '05:00' \
+                                     THEN 'Regra 2: Transação em horário suspeito (Madrugada)'
+                                 WHEN dispositivo = 'caixa_eletronico' AND valor > 5000 \
+                                     THEN 'Regra 3: Saque/Transferência de alto valor em Caixa Eletrônico'
+                                 ELSE 'Anomalia detectada por múltiplos fatores'
+                                 END as motivo_suspeita
+                      FROM transactions
+                      WHERE valor > 10000
+                         OR hora BETWEEN '00:00' AND '05:00'
+                         OR (dispositivo = 'caixa_eletronico' AND valor > 5000) \
+                      '''
+
     cursor.execute(query_anomalias)
     resultados = cursor.fetchall()
     conexao.close()
+
     return {
-        "anomalias_detectadas": len(resultados),
-        "motivo": "Transações com valor atípico (>10k) ou horários suspeitos (madrugada)",
-        "transacoes": [dict(row) for row in resultados]
+        "total_anomalias_detectadas": len(resultados),
+        "regras_de_fraude_aplicadas": [
+            "Regra 1: Valores acima de R$ 10.000,00",
+            "Regra 2: Movimentações entre 00:00 e 05:00",
+            "Regra 3: Uso de caixa eletrônico para valores > R$ 5.000,00"
+        ],
+        "transacoes_suspeitas": [dict(row) for row in resultados]
     }
 
 
-# ROTA : CLIENTES E CHAT IA
+# ROTA: CLIENTES E CHAT IA
 
-@app.post("/api/clientes", tags=["🤖 Atendimento IA"], summary="Cadastrar novo cliente")
+@app.post("/api/clientes", tags=["🤖 Atendimento IA"], summary="Cadastrar novo cliente completo")
 def criar_cliente(cliente: DadosCliente):
     try:
         conexao = sqlite3.connect('banco_brasil_ai.sqlite')
         cursor = conexao.cursor()
-        cursor.execute("INSERT INTO Cliente (nome, cpf) VALUES (?, ?)", (cliente.nome, cliente.cpf))
+
+        cursor.execute('''
+                       INSERT INTO Cliente (nome, cpf, email, telefone, data_nascimento)
+                       VALUES (?, ?, ?, ?, ?)
+                       ''', (cliente.nome, cliente.cpf, cliente.email, cliente.telefone, cliente.data_nascimento))
+
         conexao.commit()
-        return {"sucesso": True, "mensagem": "Cliente cadastrado com sucesso!"}
+        return {
+            "sucesso": True,
+            "id_cliente": cursor.lastrowid,
+            "mensagem": f"Cliente {cliente.nome} cadastrado com sucesso!"
+        }
     except sqlite3.IntegrityError:
-        raise HTTPException(status_code=400, detail="Erro: Este CPF já está cadastrado.")
+        raise HTTPException(status_code=400, detail="Erro: Este CPF ou E-mail já está cadastrado no banco de dados.")
     finally:
         conexao.close()
 
@@ -195,12 +232,19 @@ def conversar_com_ia(chat: DadosChat):
         conexao = sqlite3.connect('banco_brasil_ai.sqlite')
         cursor = conexao.cursor()
 
-        cursor.execute("SELECT id FROM Cliente WHERE id = ?", (chat.cliente_id,))
-        if not cursor.fetchone():
-            raise HTTPException(status_code=404, detail="Cliente não encontrado.")
+        # Busca o nome do cliente no banco de dados usando o ID
+        cursor.execute("SELECT nome FROM Cliente WHERE id = ?", (chat.cliente_id,))
+        resultado = cursor.fetchone()  # Traz a primeira linha encontrada
 
-        resposta_simulada = f"Olá! Entendi que você disse: '{chat.mensagem}'. Como sou um assistente do BB, como posso ajudar?"
+        if not resultado:
+            raise HTTPException(status_code=404, detail="Cliente não encontrado no banco de dados.")
 
+        nome_cliente = resultado[0]  # Extrai o nome da tupla retornada pelo banco
+
+        # Resposta personalizada para o cliente
+        resposta_simulada = f"Olá, {nome_cliente}! Entendi que você disse: '{chat.mensagem}'. Como sou o assistente virtual do Squad 02 em fase de testes, minha conexão com o cérebro real da IA será feita no futuro!"
+
+        # Salva o histórico da conversa
         cursor.execute(
             "INSERT INTO Interacao_IA (cliente_id, mensagem_cliente, resposta_ia) VALUES (?, ?, ?)",
             (chat.cliente_id, chat.mensagem, resposta_simulada)
@@ -209,6 +253,7 @@ def conversar_com_ia(chat: DadosChat):
 
         return {
             "sucesso": True,
+            "cliente": nome_cliente,
             "resposta_ia": resposta_simulada
         }
     except sqlite3.Error as e:
