@@ -41,6 +41,11 @@ def inicializar_banco_transacoes():
             dispositivo TEXT NOT NULL
         )
     ''')
+
+    # Vai evitar que demore muito na hora de buscar as anomalisas (Por causa do gerador)
+    cursor.execute('CREATE INDEX IF NOT EXISTS idx_valor ON transactions (valor)')
+    cursor.execute('CREATE INDEX IF NOT EXISTS idx_hora ON transactions (hora)')
+    cursor.execute('CREATE INDEX IF NOT EXISTS idx_dispositivo ON transactions (dispositivo)')
     conexao.commit()
     conexao.close()
 
