@@ -33,8 +33,6 @@ Bash
 pip install fastapi uvicorn pydantic requests && python main.py
 ```
 
-_(Dica de dev: Se quiser executar com recarregamento automático sempre que guardar o código, substitua o final por `uvicorn main:app --reload`)_
-
 ### 3. Aceder à Documentação Oficial
 
 Com a API a correr, abra o seu navegador e aceda ao endereço abaixo para testar todos os endpoints pela interface visual: 👉 **https://www.google.com/search?q=http://127.0.0.1:8000/scalar**
@@ -45,7 +43,7 @@ Com a API a correr, abra o seu navegador e aceda ao endereço abaixo para testar
 
 Para testar a API, tem duas opções de injeção de dados:
 
-**Opção A: Base de Dados Histórica (Dataset Oficial)** Num novo terminal (lembre-se de ativar o ambiente virtual nele também), execute o script abaixo para carregar as 30.000 transações exigidas para a avaliação:
+**Opção A: Base de Dados Histórica (Dataset Oficial)** Num novo terminal (lembre-se de ativar o ambiente virtual nele também), execute o script abaixo para carregar as 30.000 transações:
 
 Bash
 
