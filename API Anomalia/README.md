@@ -1,6 +1,4 @@
-Markdown
 
-````
 # 🏦 API Banco do Brasil - Deteção de Fraudes (Squad 02)
 
 Esta é uma API desenvolvida em **FastAPI** com base de dados **SQLite**, projetada para registar transações bancárias, filtrá-las e detetar possíveis anomalias/fraudes utilizando regras de negócio específicas. O projeto também conta com um módulo de atendimento via IA e um motor de geração de dados em tempo real.
