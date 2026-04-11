@@ -23,11 +23,59 @@ app = FastAPI(
         "name": "Squad 02",
     }
 )
+
+
 # INICIALIZAÇÃO DOS BANCOS DE DADOS
 
 def inicializar_banco_transacoes():
     conexao = sqlite3.connect('banco_brasil_transacoes.sqlite')
     cursor = conexao.cursor()
+
+    # CORE BANCÁRIO
+
+
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS Agencia (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            nome TEXT NOT NULL,
+            numero TEXT NOT NULL,
+            endereco TEXT
+        )
+    ''')
+
+    # Como o Cliente já existe no banco de IA, aqui podemos ter um
+    # Cliente_Core (ou manter só a Conta ligada direto à agência se preferir)
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS Cliente_Core (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            nome TEXT NOT NULL,
+            cpf TEXT NOT NULL UNIQUE
+        )
+    ''')
+
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS Conta (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            numero TEXT NOT NULL,
+            saldo REAL DEFAULT 0,
+            cliente_id INTEGER,
+            agencia_id INTEGER,
+            FOREIGN KEY (cliente_id) REFERENCES Cliente_Core(id),
+            FOREIGN KEY (agencia_id) REFERENCES Agencia(id)
+        )
+    ''')
+
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS Cartao (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            numero TEXT NOT NULL,
+            validade TEXT,
+            cvv TEXT,
+            conta_id INTEGER,
+            FOREIGN KEY (conta_id) REFERENCES Conta(id)
+        )
+    ''')
+
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS transactions (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -41,13 +89,14 @@ def inicializar_banco_transacoes():
             dispositivo TEXT NOT NULL
         )
     ''')
-
     # Vai evitar que demore muito na hora de buscar as anomalisas (Por causa do gerador)
     cursor.execute('CREATE INDEX IF NOT EXISTS idx_valor ON transactions (valor)')
     cursor.execute('CREATE INDEX IF NOT EXISTS idx_hora ON transactions (hora)')
     cursor.execute('CREATE INDEX IF NOT EXISTS idx_dispositivo ON transactions (dispositivo)')
+
     conexao.commit()
     conexao.close()
+
 
 def inicializar_banco_ia():
     conexao = sqlite3.connect('banco_brasil_ai.sqlite')
@@ -74,13 +123,32 @@ def inicializar_banco_ia():
     conexao.commit()
     conexao.close()
 
+
 inicializar_banco_transacoes()
 inicializar_banco_ia()
 
-
-
 # MODELOS DE DADOS (Pydantic)
 from pydantic import BaseModel, Field
+
+
+class AgenciaCreate(BaseModel):
+    nome: str
+    numero: str
+    endereco: str
+
+
+class ContaCreate(BaseModel):
+    numero: str
+    cliente_id: int
+    agencia_id: int
+
+
+class CartaoCreate(BaseModel):
+    numero: str
+    validade: str
+    cvv: str
+    conta_id: int
+
 
 class Transacao(BaseModel):
     valor: float
@@ -92,6 +160,7 @@ class Transacao(BaseModel):
     tipo_transacao: str
     dispositivo: str
 
+
 class DadosCliente(BaseModel):
     nome: str = Field(..., min_length=3, description="Nome completo do cliente")
     cpf: str = Field(..., min_length=11, max_length=14, description="CPF (com ou sem pontuação)")
@@ -99,10 +168,45 @@ class DadosCliente(BaseModel):
     telefone: str = Field(..., description="Telefone com DDD")
     data_nascimento: str = Field(..., description="Data de nascimento (YYYY-MM-DD)")
 
+
 class DadosChat(BaseModel):
     cliente_id: int
     mensagem: str
 
+# ROTA: CORE BANCÁRIO
+
+@app.post("/agencias", tags=["💲 Core Bancário"])
+def criar_agencia(agencia: AgenciaCreate):
+    conexao = sqlite3.connect('banco_brasil_transacoes.sqlite')
+    cursor = conexao.cursor()
+    cursor.execute(
+        "INSERT INTO Agencia (nome, numero, endereco) VALUES (?, ?, ?)",
+        (agencia.nome, agencia.numero, agencia.endereco)
+    )
+    conexao.commit()
+    id_gerado = cursor.lastrowid
+    conexao.close()
+    return {"sucesso": True, "mensagem": "Agência criada!", "agencia_id": id_gerado}
+
+
+@app.post("/cartoes", tags=["💲 Core Bancário"])
+def criar_cartao(cartao: CartaoCreate):
+    conexao = sqlite3.connect('banco_brasil_transacoes.sqlite')
+    cursor = conexao.cursor()
+
+    # Verifica se a conta existe antes de criar o cartão
+    cursor.execute("SELECT id FROM Conta WHERE id = ?", (cartao.conta_id,))
+    if not cursor.fetchone():
+        conexao.close()
+        raise HTTPException(status_code=404, detail="Conta não encontrada!")
+
+    cursor.execute(
+        "INSERT INTO Cartao (numero, validade, cvv, conta_id) VALUES (?, ?, ?, ?)",
+        (cartao.numero, cartao.validade, cartao.cvv, cartao.conta_id)
+    )
+    conexao.commit()
+    conexao.close()
+    return {"sucesso": True, "mensagem": "Cartão emitido e vinculado à conta!"}
 
 # ROTA: TRANSAÇÕES E ANOMALIAS
 
@@ -110,14 +214,43 @@ class DadosChat(BaseModel):
 def criar_transacao(t: Transacao):
     conexao = sqlite3.connect('banco_brasil_transacoes.sqlite')
     cursor = conexao.cursor()
+
+    # VALIDAÇÃO DO CORE BANCÁRIO
+
+    # A conta da transação realmente existe no banco?
+    cursor.execute("SELECT id FROM Conta WHERE numero = ?", (t.conta,))
+    conta_db = cursor.fetchone()
+
+    if not conta_db:
+        conexao.close()
+        raise HTTPException(
+            status_code=404,
+            detail=f"Transação negada: A conta de origem ({t.conta}) não existe no Core Bancário."
+        )
+
+    # Se for transação de cartão, o cartão existe e pertence a esta conta?
+    if t.tipo_transacao in ['cartao_credito', 'cartao_debito']:
+        numero_cartao_usado = t.dispositivo
+        cursor.execute("SELECT id FROM Cartao WHERE numero = ? AND conta_id = ?", (numero_cartao_usado, conta_db[0]))
+        if not cursor.fetchone():
+            conexao.close()
+            raise HTTPException(
+                status_code=403,
+                detail="Transação negada: Cartão inválido ou não pertence a esta conta."
+            )
+
+    # Se passou ileso pelas validações acima, registra a transação normalmente
     cursor.execute('''
         INSERT INTO transactions (valor, data, hora, categoria, conta, cidade, tipo_transacao, dispositivo)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     ''', (t.valor, t.data, t.hora, t.categoria, t.conta, t.cidade, t.tipo_transacao, t.dispositivo))
+
     conexao.commit()
     transacao_id = cursor.lastrowid
     conexao.close()
+
     return {"sucesso": True, "id_transacao": transacao_id, "mensagem": "Transação criada com sucesso!"}
+
 
 @app.get("/transactions", tags=["💳 Transações Bancárias"], summary="Listar transações com filtros")
 def listar_transacoes(
@@ -154,6 +287,7 @@ def listar_transacoes(
     conexao.close()
     return {"total": len(resultados), "transacoes": [dict(row) for row in resultados]}
 
+
 @app.get("/transactions/{id}", tags=["💳 Transações Bancárias"], summary="Buscar uma transação específica pelo ID")
 def buscar_transacao_por_id(id: int):
     conexao = sqlite3.connect('banco_brasil_transacoes.sqlite')
@@ -173,23 +307,33 @@ def detectar_anomalias():
     conexao.row_factory = sqlite3.Row
     cursor = conexao.cursor()
 
-   # Regras
-
+    # "JOIN" liga a transação à conta e depois ao cliente
     query_anomalias = '''
-                      SELECT *,
-                             CASE
-                                 WHEN valor > 10000 THEN 'Regra 1: Valor extremamente alto (> R$ 10.000)'
-                                 WHEN hora BETWEEN '00:00' AND '05:00' \
-                                     THEN 'Regra 2: Transação em horário suspeito (Madrugada)'
-                                 WHEN dispositivo = 'caixa_eletronico' AND valor > 5000 \
-                                     THEN 'Regra 3: Saque/Transferência de alto valor em Caixa Eletrônico'
-                                 ELSE 'Anomalia detectada por múltiplos fatores'
-                                 END as motivo_suspeita
-                      FROM transactions
-                      WHERE valor > 10000
-                         OR hora BETWEEN '00:00' AND '05:00'
-                         OR (dispositivo = 'caixa_eletronico' AND valor > 5000) \
-                      '''
+        SELECT 
+            t.id as id_transacao,
+            t.valor,
+            t.data,
+            t.hora,
+            t.categoria,
+            t.tipo_transacao,
+            t.dispositivo,
+            t.cidade,
+            c.nome as cliente_nome,
+            c.cpf as cliente_cpf,
+            co.numero as conta_numero,
+            CASE
+                WHEN t.valor > 10000 THEN 'Regra 1: Valor extremamente alto (> R$ 10.000)'
+                WHEN t.hora BETWEEN '00:00' AND '05:00' THEN 'Regra 2: Transação em horário suspeito (Madrugada)'
+                WHEN t.dispositivo = 'caixa_eletronico' AND t.valor > 5000 THEN 'Regra 3: Saque/Transferência de alto valor em Caixa Eletrônico'
+                ELSE 'Anomalia detectada por múltiplos fatores'
+            END as motivo_suspeita
+        FROM transactions t
+        LEFT JOIN Conta co ON t.conta = co.numero
+        LEFT JOIN Cliente_Core c ON co.cliente_id = c.id
+        WHERE t.valor > 10000
+           OR t.hora BETWEEN '00:00' AND '05:00'
+           OR (t.dispositivo = 'caixa_eletronico' AND t.valor > 5000)
+    '''
 
     cursor.execute(query_anomalias)
     resultados = cursor.fetchall()
@@ -266,6 +410,7 @@ def conversar_com_ia(chat: DadosChat):
     finally:
         conexao.close()
 
+
 # DOCUMENTAÇÃO SCALAR
 
 @app.get("/scalar", include_in_schema=False)
@@ -288,6 +433,7 @@ def documentacao_scalar():
     </html>
     """
     return HTMLResponse(content=html_content)
+
 
 if __name__ == "__main__":
     import uvicorn
