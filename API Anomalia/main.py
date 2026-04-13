@@ -123,10 +123,8 @@ def inicializar_banco_ia():
     conexao = sqlite3.connect('banco_brasil_ai.sqlite')
     cursor = conexao.cursor()
 
-    # 1. REMOVA O '#' DA LINHA ABAIXO (A OPÇÃO NUCLEAR)
     cursor.execute("DROP TABLE IF EXISTS Cliente")
 
-    # 2. Agora ele vai criar a tabela com a coluna 'email' obrigatoriamente
     cursor.execute('''
                    CREATE TABLE IF NOT EXISTS Cliente
                    (
