@@ -97,20 +97,68 @@ def inicializar_banco_transacoes():
     conexao.commit()
     conexao.close()
 
+def popular_banco_massivo():
+    conexao = sqlite3.connect('banco_brasil_transacoes.sqlite')
+    cursor = conexao.cursor()
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS transactions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            valor REAL NOT NULL,
+            data TEXT NOT NULL,
+            hora TEXT NOT NULL,
+            categoria TEXT NOT NULL,
+            conta TEXT NOT NULL,
+            cidade TEXT NOT NULL,
+            tipo_transacao TEXT NOT NULL,
+            dispositivo TEXT NOT NULL
+        )
+    ''')
+
+    print("🧹 Limpando histórico antigo...")
+    cursor.execute("DELETE FROM transactions")
+    conexao.commit()
+
 
 def inicializar_banco_ia():
     conexao = sqlite3.connect('banco_brasil_ai.sqlite')
     cursor = conexao.cursor()
+
+    # 1. REMOVA O '#' DA LINHA ABAIXO (A OPÇÃO NUCLEAR)
+    cursor.execute("DROP TABLE IF EXISTS Cliente")
+
+    # 2. Agora ele vai criar a tabela com a coluna 'email' obrigatoriamente
     cursor.execute('''
-        CREATE TABLE IF NOT EXISTS Cliente (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            nome TEXT NOT NULL,
-            cpf TEXT UNIQUE NOT NULL,
-            email TEXT UNIQUE NOT NULL,
-            telefone TEXT NOT NULL,
-            data_nascimento TEXT NOT NULL
-        )
-    ''')
+                   CREATE TABLE IF NOT EXISTS Cliente
+                   (
+                       id
+                       INTEGER
+                       PRIMARY
+                       KEY
+                       AUTOINCREMENT,
+                       nome
+                       TEXT
+                       NOT
+                       NULL,
+                       cpf
+                       TEXT
+                       UNIQUE
+                       NOT
+                       NULL,
+                       email
+                       TEXT
+                       UNIQUE
+                       NOT
+                       NULL,
+                       telefone
+                       TEXT
+                       NOT
+                       NULL,
+                       data_nascimento
+                       TEXT
+                       NOT
+                       NULL
+                   )
+                   ''')
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS Interacao_IA (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -355,19 +403,23 @@ def detectar_anomalias():
 @app.post("/api/clientes", tags=["🤖 Atendimento IA"])
 def criar_cliente(cliente: DadosCliente):
     try:
-        conexao = sqlite3.connect('banco_brasil_ai.sqlite')
+        # Adicione o timeout=5 aqui
+        conexao = sqlite3.connect('banco_brasil_ai.sqlite', timeout=5)
         cursor = conexao.cursor()
+
+        print(f"Tentando inserir: {cliente.nome}")  # Debug no console
+
         cursor.execute('''
-            INSERT INTO Cliente (nome, cpf, email, telefone, data_nascimento)
-            VALUES (?, ?, ?, ?, ?)
-        ''', (cliente.nome, cliente.cpf, cliente.email, cliente.telefone, cliente.data_nascimento))
+                       INSERT INTO Cliente (nome, cpf, email, telefone, data_nascimento)
+                       VALUES (?, ?, ?, ?, ?)
+                       ''', (cliente.nome, cliente.cpf, cliente.email, cliente.telefone, cliente.data_nascimento))
+
         conexao.commit()
-        return {"sucesso": True, "id": cursor.lastrowid}
-    except sqlite3.IntegrityError:
-        raise HTTPException(status_code=400, detail="CPF ou E-mail já cadastrado.")
+        return {"sucesso": True, "mensagem": "Cadastrado!"}
+    except sqlite3.OperationalError as e:
+        raise HTTPException(status_code=500, detail=f"Banco travado ou erro de estrutura: {e}")
     except Exception as e:
-        # ISSO AQUI vai te mostrar no console o que realmente deu errado!
-        raise HTTPException(status_code=500, detail=f"Erro inesperado: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Erro: {e}")
     finally:
         conexao.close()
 
