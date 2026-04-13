@@ -352,25 +352,22 @@ def detectar_anomalias():
 
 # ROTA: CLIENTES E CHAT IA
 
-@app.post("/api/clientes", tags=["🤖 Atendimento IA"], summary="Cadastrar novo cliente completo")
+@app.post("/api/clientes", tags=["🤖 Atendimento IA"])
 def criar_cliente(cliente: DadosCliente):
     try:
         conexao = sqlite3.connect('banco_brasil_ai.sqlite')
         cursor = conexao.cursor()
-
         cursor.execute('''
-                       INSERT INTO Cliente (nome, cpf, email, telefone, data_nascimento)
-                       VALUES (?, ?, ?, ?, ?)
-                       ''', (cliente.nome, cliente.cpf, cliente.email, cliente.telefone, cliente.data_nascimento))
-
+            INSERT INTO Cliente (nome, cpf, email, telefone, data_nascimento)
+            VALUES (?, ?, ?, ?, ?)
+        ''', (cliente.nome, cliente.cpf, cliente.email, cliente.telefone, cliente.data_nascimento))
         conexao.commit()
-        return {
-            "sucesso": True,
-            "id_cliente": cursor.lastrowid,
-            "mensagem": f"Cliente {cliente.nome} cadastrado com sucesso!"
-        }
+        return {"sucesso": True, "id": cursor.lastrowid}
     except sqlite3.IntegrityError:
-        raise HTTPException(status_code=400, detail="Erro: Este CPF ou E-mail já está cadastrado no banco de dados.")
+        raise HTTPException(status_code=400, detail="CPF ou E-mail já cadastrado.")
+    except Exception as e:
+        # ISSO AQUI vai te mostrar no console o que realmente deu errado!
+        raise HTTPException(status_code=500, detail=f"Erro inesperado: {str(e)}")
     finally:
         conexao.close()
 
