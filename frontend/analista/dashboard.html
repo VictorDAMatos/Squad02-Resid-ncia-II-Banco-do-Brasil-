@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard do Analista - Motor de Fraudes</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; background-color: #2c3e50; color: white; }
+        .alerta { background-color: #e74c3c; padding: 10px; margin: 10px 0; border-radius: 5px; }
+        button { background-color: #3498db; color: white; border: none; padding: 10px 20px; cursor: pointer; font-size: 16px;}
+    </style>
+</head>
+<body>
+    <h1>🛡️ Central de Inteligência - Detecção de Fraudes</h1>
+    <p>Painel de monitorização de anomalias (Isolation Forest).</p>
+    
+    <button onclick="buscarAnomalias()">🔍 Verificar Transações Suspeitas</button>
+    
+    <div id="painel-alertas" style="margin-top: 20px;">
+        </div>
+
+    <script src="js/api_analista.js"></script>
+</body>
+</html>
