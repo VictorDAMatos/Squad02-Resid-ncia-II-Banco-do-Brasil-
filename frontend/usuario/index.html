@@ -7,16 +7,22 @@
         body { font-family: Arial, sans-serif; padding: 20px; background-color: #f4f4f9; }
         .caixa { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
         button { background-color: #f9dd16; border: none; padding: 10px 20px; cursor: pointer; font-weight: bold; }
+        button:disabled { cursor: not-allowed; opacity: 0.6; }
+        .acoes { display: flex; gap: 10px; flex-wrap: wrap; }
     </style>
 </head>
 <body>
     <div class="caixa">
         <h1>Bem-vindo à sua Conta!</h1>
         <p>Aqui você pode ver o seu extrato.</p>
-        <button onclick="buscarExtrato()">Ver Minhas Transações</button>
-        
+
+        <div class="acoes">
+            <button onclick="buscarExtrato()">Ver Minhas Transações</button>
+            <button id="btn-exportar" onclick="exportarTransacoes()" disabled>Exportar lista</button>
+        </div>
+
         <ul id="lista-transacoes">
-            </ul>
+        </ul>
     </div>
 
     <script src="js/api_cliente.js"></script>
