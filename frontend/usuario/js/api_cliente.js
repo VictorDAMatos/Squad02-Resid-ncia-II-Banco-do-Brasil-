@@ -41,9 +41,21 @@ function renderizarTransacoes(transacoes) {
     const lista = document.getElementById('lista-transacoes');
     lista.innerHTML = '';
 
+    if (transacoes.length === 0) {
+        const itemVazio = document.createElement('li');
+        itemVazio.className = 'estado-vazio';
+        itemVazio.textContent = 'Nenhuma transação encontrada para exibir.';
+        lista.appendChild(itemVazio);
+        return;
+    }
+
     transacoes.forEach(t => {
         const item = document.createElement('li');
-        item.textContent = formatarTransacao(t);
+        item.innerHTML = `
+            <div class="linha-valor">${formatarValor(t.valor)}</div>
+            <div class="linha-meta">${t.categoria} • ${t.data} ${t.hora}</div>
+            <div class="linha-meta">${t.conta}</div>
+        `;
         lista.appendChild(item);
     });
 }
