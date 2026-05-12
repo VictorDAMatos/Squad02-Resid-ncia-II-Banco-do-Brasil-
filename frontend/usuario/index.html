@@ -127,37 +127,43 @@
           <div class="qa-icon-wrap">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
           </div>
-          <span>Transferir</span>
+          <span class="qa-title">Transferir</span>
+          <small>Enviar valores entre contas BB.</small>
         </button>
         <button class="qa-btn" onclick="openPixModal()">
           <div class="qa-icon-wrap">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
           </div>
-          <span>Pix</span>
+          <span class="qa-title">Pix</span>
+          <small>Pagamento instantâneo 24 horas.</small>
         </button>
         <button class="qa-btn" onclick="openDepositModal()">
           <div class="qa-icon-wrap">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
           </div>
-          <span>Depositar</span>
+          <span class="qa-title">Depositar</span>
+          <small>Adicionar crédito à conta.</small>
         </button>
         <button class="qa-btn" data-page="history">
           <div class="qa-icon-wrap">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/></svg>
           </div>
-          <span>Extrato</span>
+          <span class="qa-title">Extrato</span>
+          <small>Consultar movimentações recentes.</small>
         </button>
         <button class="qa-btn" onclick="showToast('Função disponível em breve.')">
           <div class="qa-icon-wrap">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
           </div>
-          <span>Boleto</span>
+          <span class="qa-title">Boleto</span>
+          <small>Gerar e pagar boletos.</small>
         </button>
         <button class="qa-btn" onclick="showToast('Função disponível em breve.')">
           <div class="qa-icon-wrap">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
           </div>
-          <span>Empréstimo</span>
+          <span class="qa-title">Empréstimo</span>
+          <small>Simular crédito e parcelas.</small>
         </button>
       </div>
 
@@ -246,10 +252,16 @@
         <h1 class="page-title">Extrato da conta</h1>
         <p class="subgreeting">CC 58392-1 · Ag. 0042-3</p>
       </div>
-      <div class="filter-bar">
-        <button class="filter-btn active" data-filter="all">Todas</button>
-        <button class="filter-btn" data-filter="sent">Débitos</button>
-        <button class="filter-btn" data-filter="received">Créditos</button>
+      <div class="history-toolbar">
+        <div class="filter-bar">
+          <button class="filter-btn active" data-filter="all">Todas</button>
+          <button class="filter-btn" data-filter="sent">Débitos</button>
+          <button class="filter-btn" data-filter="received">Créditos</button>
+        </div>
+        <button class="export-btn" id="exportTransactionsBtn" onclick="exportTransactions()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M5 21h14"/></svg>
+          Exportar lista
+        </button>
       </div>
       <div class="transactions-list full" id="historyTransactions"></div>
     </section>
@@ -366,6 +378,6 @@
   </div>
 
   <div class="toast" id="toast"></div>
-  <script src="app.js"></script>
+  <script src="js/app.js"></script>
 </body>
 </html>
