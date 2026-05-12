@@ -398,6 +398,8 @@ body.dark .greeting { color: var(--bb-yellow); }
   font-weight: 500;
   color: var(--text-secondary);
   transition: all var(--transition);
+  text-align: center;
+  min-height: 112px;
 }
 .qa-btn:hover {
   border-color: var(--bb-blue);
@@ -420,6 +422,24 @@ body.dark .qa-btn:hover { background: #0d1a3a; color: var(--bb-yellow); border-c
 body.dark .qa-icon-wrap { background: #0d1a3a; color: var(--bb-yellow); }
 .qa-btn:hover .qa-icon-wrap { background: var(--bb-blue); color: white; }
 body.dark .qa-btn:hover .qa-icon-wrap { background: var(--bb-yellow); color: var(--bb-blue); }
+.qa-title {
+  display: block;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+.qa-btn small {
+  display: block;
+  font-size: 0.7rem;
+  line-height: 1.35;
+  color: var(--text-muted);
+}
+.qa-btn:hover .qa-title {
+  color: var(--bb-blue);
+}
+body.dark .qa-btn:hover .qa-title {
+  color: var(--bb-yellow);
+}
 
 .dashboard-grid {
   display: grid;
@@ -525,6 +545,14 @@ body.dark .section-title { color: var(--bb-yellow); }
 .tx-amount.deposit  { color: var(--bb-blue); }
 
 .filter-bar { display: flex; gap: 8px; margin-bottom: 18px; }
+.history-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 18px;
+  flex-wrap: wrap;
+}
 .filter-btn {
   padding: 7px 16px;
   border: 1px solid var(--border);
@@ -546,6 +574,31 @@ body.dark .filter-btn.active, body.dark .filter-btn:hover {
   background: var(--bb-yellow);
   border-color: var(--bb-yellow);
   color: var(--bb-blue);
+}
+.export-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 16px;
+  border: 1px solid var(--bb-blue);
+  border-radius: 4px;
+  background: var(--bb-blue);
+  color: #fff;
+  font-family: var(--font);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition);
+}
+.export-btn:hover {
+  background: var(--bb-blue-mid);
+  border-color: var(--bb-blue-mid);
+  box-shadow: var(--shadow-sm);
+}
+.export-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+  box-shadow: none;
 }
 
 .form-card {
