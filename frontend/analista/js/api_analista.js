@@ -183,6 +183,9 @@ async function carregarDados() {
 
         renderKPIs(dados.kpis || {});
 
+        // adiciona placeholder para o cartão de gasto médio diário (será preenchido ao aplicar filtros)
+        renderGastoMedioDiario([], null);
+
         if (chartsGrid) chartsGrid.style.display = '';
 
         criarGrafico(
@@ -294,6 +297,8 @@ async function aplicarFiltros() {
         if (aviso && dados.avisos?.length) aviso.innerHTML = dados.avisos.map(escaparHTML).join('<br>');
 
         renderTransacoes(transacoes);
+        // atualiza o cartão de Gasto Médio Diário com base nas transações filtradas
+        renderGastoMedioDiario(transacoes, cpf);
     } catch (erro) {
         if (corpo) corpo.innerHTML = `<tr><td colspan="9" style="text-align:center;padding:20px;color:#e74c3c">Erro ao aplicar filtros: ${escaparHTML(erro.message)}</td></tr>`;
         console.error('Erro ao aplicar filtros:', erro);
@@ -322,6 +327,63 @@ function renderTransacoes(transacoes) {
             <td>${escaparHTML(transacao.dispositivo)}</td>
         </tr>
     `).join('');
+}
+
+function _toNumberValor(v) {
+    if (typeof v === 'number') return v;
+    if (!v) return 0;
+    try {
+        // aceita formatos como 1.234,56 ou 1234.56
+        const s = String(v).trim().replace(/\./g, '').replace(/,/, '.');
+        return Number(s) || 0;
+    } catch (e) {
+        return 0;
+    }
+}
+
+function calcularGastoMedioDiario(transacoes) {
+    if (!transacoes || transacoes.length === 0) return 0;
+    const porDia = {};
+    let total = 0;
+
+    transacoes.forEach(t => {
+        const data = t.data || t.data_transacao || '';
+        const valor = _toNumberValor(t.valor);
+        if (!data) return;
+        porDia[data] = (porDia[data] || 0) + valor;
+        total += valor;
+    });
+
+    const dias = Object.keys(porDia).length || 1;
+    return total / dias;
+}
+
+function renderGastoMedioDiario(transacoes, cpf) {
+    const grid = document.getElementById('kpi-grid');
+    if (!grid) return;
+
+    const id = 'kpi-gasto-medio-diario';
+    const label = 'Gasto Médio Diário';
+    const sub = cpf ? `cliente ${escaparHTML(cpf)}` : 'filtre por CPF/Conta';
+
+    let value = '—';
+    if (cpf && transacoes && transacoes.length) {
+        const avg = calcularGastoMedioDiario(transacoes);
+        value = fmt(avg);
+    }
+
+    const cardHtml = `
+        <div class="kpi-card" id="${id}" style="--accent:var(--bb-yellow)">
+            <div class="icon">🧾</div>
+            <div class="label">${label}</div>
+            <div class="value">${value}</div>
+            <div class="sub">${sub}</div>
+        </div>
+    `;
+
+    const existing = document.getElementById(id);
+    if (existing) existing.outerHTML = cardHtml;
+    else grid.insertAdjacentHTML('beforeend', cardHtml);
 }
 
 function limparFiltros() {
