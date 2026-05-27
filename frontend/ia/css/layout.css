@@ -1,0 +1,35 @@
+* {
+
+    margin: 0;
+
+    padding: 0;
+
+    box-sizing: border-box;
+}
+
+body {
+
+    background:
+        linear-gradient(
+            135deg,
+            #020202,
+            #050816,
+            #07121f
+        );
+
+    color: white;
+
+    font-family:
+        Inter,
+        Arial,
+        sans-serif;
+
+    overflow-x: hidden;
+}
+
+.main-content {
+
+    padding: 40px;
+
+    min-height: 100vh;
+}

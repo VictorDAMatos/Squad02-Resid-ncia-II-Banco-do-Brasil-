@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>BB — Banco do Brasil</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <aside class="sidebar" id="sidebar">
+
+    <div class="sidebar-header">
+      <div class="logo">
+        <div class="logo-emblem">
+          <div class="bb-circle bb-blue"></div>
+          <div class="bb-circle bb-yellow"></div>
+        </div>
+        <div class="logo-texts">
+          <span class="logo-bb">BB</span>
+          <span class="logo-name">Banco do Brasil</span>
+        </div>
+      </div>
+      <button class="sidebar-close" id="sidebarClose">✕</button>
+    </div>
+
+    <div class="user-card">
+      <div class="avatar">
+        <img src="https://api.dicebear.com/7.x/micah/svg?seed=julia&backgroundColor=f5d020" alt="Avatar Julia" />
+      </div>
+      <div class="user-info">
+        <p class="user-name">Julia Andrade</p>
+        <p class="user-detail">Analista Administrativa</p>
+        <p class="user-account">Ag. 0042-3 · CC 58392-1</p>
+      </div>
+    </div>
+
+    <nav class="nav-menu">
+      <a href="#" class="nav-item active" data-page="dashboard">
+        <svg class="nav-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+        Início
+      </a>
+      <a href="#" class="nav-item" data-page="transactions">
+        <svg class="nav-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 16V4m0 0L3 8m4-4 4 4M17 8v12m0 0 4-4m-4 4-4-4"/></svg>
+        Transferências
+      </a>
+      <a href="#" class="nav-item" data-page="history">
+        <svg class="nav-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        Extrato
+      </a>
+      <a href="#" class="nav-item" data-page="settings">
+        <svg class="nav-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        Configurações
+      </a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <button class="btn-logout">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        Sair da conta
+      </button>
+    </div>
+  </aside>
+
+  <div class="overlay" id="overlay"></div>
+
+  <main class="main" id="main">
+
+    <header class="topbar">
+      <button class="menu-btn" id="menuBtn">&#9776;</button>
+      <div class="topbar-center">BB | Internet Banking</div>
+      <div class="topbar-right">
+        <span class="topbar-time" id="currentTime"></span>
+        <div class="notif-bell" id="notifBell">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="19" height="19"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+          <span class="notif-badge" id="notifBadge">2</span>
+        </div>
+      </div>
+    </header>
+
+    <section class="page active" id="page-dashboard">
+
+      <div class="page-header">
+        <div>
+          <h1 class="greeting" id="greeting">Bom dia, Julia</h1>
+          <p class="subgreeting">Bem-vinda ao seu Internet Banking BB.</p>
+        </div>
+        <div class="header-date" id="headerDate"></div>
+      </div>
+
+      <div class="balance-card" id="balanceCard">
+        <div class="balance-card-inner">
+          <div class="balance-left">
+            <div class="balance-card-top">
+              <span class="balance-label">SALDO EM CONTA CORRENTE</span>
+              <button class="toggle-balance" id="toggleBalance" title="Mostrar/ocultar">
+                <svg id="eyeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              </button>
+            </div>
+            <div class="balance-value" id="balanceDisplay">R$ 1.847,50</div>
+            <div class="balance-meta">
+              <span class="balance-update">● Atualizado agora</span>
+              <span class="balance-account">CC · 58392-1</span>
+            </div>
+          </div>
+          <div class="balance-divider"></div>
+          <div class="balance-right">
+            <div class="balance-stat">
+              <span class="stat-label">Limite disponível</span>
+              <span class="stat-val" id="limitDisplay">R$ 1.152,50</span>
+            </div>
+            <div class="balance-bar">
+              <div class="balance-bar-fill" id="balanceBarFill" style="width:62%"></div>
+            </div>
+            <div class="balance-limits">
+              <span id="limitPct">62% utilizado</span>
+              <span>Limite: R$ 3.000,00</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="quick-actions">
+        <button class="qa-btn" data-page="transactions">
+          <div class="qa-icon-wrap">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+          </div>
+          <span class="qa-title">Transferir</span>
+          <small>Enviar valores entre contas BB.</small>
+        </button>
+        <button class="qa-btn" onclick="openPixModal()">
+          <div class="qa-icon-wrap">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+          </div>
+          <span class="qa-title">Pix</span>
+          <small>Pagamento instantâneo 24 horas.</small>
+        </button>
+        <button class="qa-btn" onclick="openDepositModal()">
+          <div class="qa-icon-wrap">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+          </div>
+          <span class="qa-title">Depositar</span>
+          <small>Adicionar crédito à conta.</small>
+        </button>
+        <button class="qa-btn" data-page="history">
+          <div class="qa-icon-wrap">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/></svg>
+          </div>
+          <span class="qa-title">Extrato</span>
+          <small>Consultar movimentações recentes.</small>
+        </button>
+        <button class="qa-btn" onclick="showToast('Função disponível em breve.')">
+          <div class="qa-icon-wrap">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+          </div>
+          <span class="qa-title">Boleto</span>
+          <small>Gerar e pagar boletos.</small>
+        </button>
+        <button class="qa-btn" onclick="showToast('Função disponível em breve.')">
+          <div class="qa-icon-wrap">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+          </div>
+          <span class="qa-title">Empréstimo</span>
+          <small>Simular crédito e parcelas.</small>
+        </button>
+      </div>
+
+      <div class="dashboard-grid">
+        <div class="recent-section">
+          <div class="section-header">
+            <h2 class="section-title">Movimentações recentes</h2>
+            <a href="#" class="see-all" data-page="history">Ver extrato completo →</a>
+          </div>
+          <div class="transactions-list" id="recentTransactions"></div>
+        </div>
+
+        <div class="alerts-section">
+          <h2 class="section-title">Avisos e alertas</h2>
+          <div id="alertsContainer">
+            <div class="alert-item alert-warning">
+              <div class="alert-icon-wrap warning">!</div>
+              <div class="alert-text">
+                <strong>Limite próximo do fim</strong>
+                <p>Você já usou 62% do seu limite mensal.</p>
+              </div>
+              <button class="alert-close" onclick="dismissAlert(this)">✕</button>
+            </div>
+            <div class="alert-item alert-info">
+              <div class="alert-icon-wrap info">i</div>
+              <div class="alert-text">
+                <strong>Crédito recebido</strong>
+                <p>R$ 150,00 de Ana Lima — hoje 14:30</p>
+              </div>
+              <button class="alert-close" onclick="dismissAlert(this)">✕</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="page" id="page-transactions">
+      <div class="page-header">
+        <h1 class="page-title">Transferência entre contas</h1>
+        <p class="subgreeting">Preencha os dados do favorecido.</p>
+      </div>
+      <div class="form-card">
+        <div class="form-section-label">DADOS DA OPERAÇÃO</div>
+        <div class="form-group">
+          <label class="form-label">Conta de débito</label>
+          <div class="origin-display">
+            <div>
+              <div class="od-name">Julia Andrade</div>
+              <div class="od-sub">CC 58392-1 · Ag. 0042-3</div>
+            </div>
+            <span class="od-balance">Saldo: <strong id="formBalance">R$ 1.847,50</strong></span>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="recipientName">Nome do favorecido</label>
+            <input type="text" id="recipientName" class="form-input" placeholder="Nome completo" />
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="recipientAccount">Agência e conta</label>
+            <input type="text" id="recipientAccount" class="form-input" placeholder="0000 · 00000-0" />
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="transferAmount">Valor (R$)</label>
+            <div class="amount-input-wrap">
+              <span class="currency-prefix">R$</span>
+              <input type="number" id="transferAmount" class="form-input amount-input" placeholder="0,00" min="0.01" step="0.01" />
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="transferDesc">Finalidade</label>
+            <input type="text" id="transferDesc" class="form-input" placeholder="Opcional" />
+          </div>
+        </div>
+        <div class="form-actions">
+          <button class="btn-secondary" onclick="navigateTo('dashboard')">Cancelar</button>
+          <button class="btn-primary" onclick="initiateTransfer()">Continuar →</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="page" id="page-history">
+      <div class="page-header">
+        <h1 class="page-title">Extrato da conta</h1>
+        <p class="subgreeting">CC 58392-1 · Ag. 0042-3</p>
+      </div>
+      <div class="history-toolbar">
+        <div class="filter-bar">
+          <button class="filter-btn active" data-filter="all">Todas</button>
+          <button class="filter-btn" data-filter="sent">Débitos</button>
+          <button class="filter-btn" data-filter="received">Créditos</button>
+        </div>
+        <button class="export-btn" id="exportTransactionsBtn" onclick="exportTransactions()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M5 21h14"/></svg>
+          Exportar lista
+        </button>
+      </div>
+      <div class="transactions-list full" id="historyTransactions"></div>
+    </section>
+
+    <section class="page" id="page-settings">
+      <div class="page-header">
+        <h1 class="page-title">Configurações</h1>
+        <p class="subgreeting">Preferências da sua conta.</p>
+      </div>
+      <div class="settings-list">
+        <div class="settings-item">
+          <div class="settings-item-info">
+            <strong>Notificações de movimentações</strong>
+            <span>Receba alertas a cada operação realizada</span>
+          </div>
+          <label class="toggle-switch"><input type="checkbox" checked /><span class="slider"></span></label>
+        </div>
+        <div class="settings-item">
+          <div class="settings-item-info">
+            <strong>Autenticação em dois fatores</strong>
+            <span>Maior segurança no acesso à conta</span>
+          </div>
+          <label class="toggle-switch"><input type="checkbox" /><span class="slider"></span></label>
+        </div>
+        <div class="settings-item">
+          <div class="settings-item-info">
+            <strong>Tema escuro</strong>
+            <span>Alterar aparência da interface</span>
+          </div>
+          <label class="toggle-switch"><input type="checkbox" id="darkModeToggle" /><span class="slider"></span></label>
+        </div>
+        <div class="settings-item">
+          <div class="settings-item-info">
+            <strong>Alertas de limite de crédito</strong>
+            <span>Aviso automático ao ultrapassar 80% do limite</span>
+          </div>
+          <label class="toggle-switch"><input type="checkbox" checked /><span class="slider"></span></label>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <div class="modal-backdrop" id="modal-confirm">
+    <div class="modal">
+      <div class="modal-header-bar">
+        <div class="modal-logo-mini"><div class="bb-circle bb-blue" style="width:9px;height:9px"></div><div class="bb-circle bb-yellow" style="width:9px;height:9px;margin-left:-3px"></div></div>
+        <span>Banco do Brasil</span>
+      </div>
+      <div class="modal-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="26" height="26"><path d="M7 16V4m0 0L3 8m4-4 4 4M17 8v12m0 0 4-4m-4 4-4-4"/></svg></div>
+      <h2 class="modal-title">Confirmar transferência</h2>
+      <div class="modal-details" id="modalDetails"></div>
+      <div class="modal-alert"><span>!</span><p>Verifique os dados antes de confirmar. Esta operação não poderá ser desfeita.</p></div>
+      <div class="modal-actions">
+        <button class="btn-secondary" onclick="closeModal('modal-confirm')">Cancelar</button>
+        <button class="btn-primary" onclick="confirmTransfer()">Confirmar transferência</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="modal-success">
+    <div class="modal modal-sm">
+      <div class="modal-icon success-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="26" height="26"><polyline points="20 6 9 17 4 12"/></svg></div>
+      <h2 class="modal-title">Operação realizada!</h2>
+      <p class="modal-sub" id="successMsg"></p>
+      <p class="modal-protocol">Protocolo: <strong id="protocolNum"></strong></p>
+      <button class="btn-primary" onclick="closeModal('modal-success'); navigateTo('dashboard')">Voltar ao início</button>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="modal-error">
+    <div class="modal modal-sm">
+      <div class="modal-icon error-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="26" height="26"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></div>
+      <h2 class="modal-title">Operação não realizada</h2>
+      <p class="modal-sub" id="errorMsg"></p>
+      <button class="btn-primary" onclick="closeModal('modal-error')">Tentar novamente</button>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="modal-pix">
+    <div class="modal">
+      <div class="modal-header-bar pix-bar"><span class="pix-tag">&#9889; Pix</span></div>
+      <div class="modal-icon pix-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="26" height="26"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></div>
+      <h2 class="modal-title">Transferência Pix</h2>
+      <div class="form-group">
+        <label class="form-label">Chave Pix do destinatário</label>
+        <input type="text" class="form-input" id="pixKey" placeholder="CPF, e-mail, telefone ou chave aleatória" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Valor (R$)</label>
+        <div class="amount-input-wrap"><span class="currency-prefix">R$</span><input type="number" id="pixAmount" class="form-input amount-input" placeholder="0,00" /></div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn-secondary" onclick="closeModal('modal-pix')">Cancelar</button>
+        <button class="btn-primary" onclick="processPix()">Confirmar Pix</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="modal-deposit">
+    <div class="modal modal-sm">
+      <div class="modal-icon deposit-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="26" height="26"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg></div>
+      <h2 class="modal-title">Simular crédito</h2>
+      <p class="modal-sub">Adicione um valor à sua conta corrente.</p>
+      <div class="form-group">
+        <label class="form-label">Valor (R$)</label>
+        <div class="amount-input-wrap"><span class="currency-prefix">R$</span><input type="number" id="depositAmount" class="form-input amount-input" placeholder="0,00" /></div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn-secondary" onclick="closeModal('modal-deposit')">Cancelar</button>
+        <button class="btn-primary" onclick="processDeposit()">Confirmar crédito</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+  <script src="js/app.js"></script>
+</body>
+</html>

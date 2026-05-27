@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BB — Central de Risco & Auditoria</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body class="dark-theme">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="logo" aria-label="Banco do Brasil - Segurança e Risco">
+        <div class="logo-emblem" aria-hidden="true">
+          <div class="bb-circle bb-blue"></div>
+          <div class="bb-circle bb-yellow"></div>
+        </div>
+        <div class="logo-texts">
+          <span class="logo-bb">BB</span>
+          <span class="logo-name">Segurança & Risco</span>
+        </div>
+      </div>
+      <button class="sidebar-close" id="sidebarClose" type="button" aria-label="Fechar menu lateral">✕</button>
+    </div>
+
+    <div class="analyst-card">
+      <div class="analyst-avatar">VD</div>
+      <div class="analyst-meta">
+        <span class="analyst-name">Victor Daniel</span>
+        <span class="analyst-role">Analista Sênior · MTR 4412</span>
+        <span class="analyst-unit">Unidade Antifraude BB</span>
+      </div>
+    </div>
+
+    <nav class="nav-menu" aria-label="Módulos do painel do analista">
+      <span class="nav-section-title">MÓDULOS OPERACIONAIS</span>
+      <button class="nav-item active" type="button" data-page="view-dashboard" data-title="Painel de Auditoria" aria-controls="view-dashboard" aria-selected="true">
+        <span class="nav-icon" aria-hidden="true">📊</span>
+        <span>Painel de Auditoria</span>
+      </button>
+      <button class="nav-item" type="button" data-page="view-transacoes" data-title="Fila de Análise de Risco" aria-controls="view-transacoes" aria-selected="false">
+        <span class="nav-icon" aria-hidden="true">🔍</span>
+        <span>Fila de Risco</span>
+      </button>
+      <button class="nav-item" type="button" data-page="view-operacoes" data-title="Controle Operacional & SLA" aria-controls="view-operacoes" aria-selected="false">
+        <span class="nav-icon" aria-hidden="true">⚙️</span>
+        <span>Controle & SLA</span>
+      </button>
+      <button class="nav-item" type="button" data-page="view-aicore" data-title="Núcleo de Inteligência Artificial" aria-controls="view-aicore" aria-selected="false">
+        <span class="nav-icon" aria-hidden="true">🤖</span>
+        <span>AICore</span>
+      </button>
+    </nav>
+
+    <div class="sidebar-ai-box">
+      <div class="ai-orb" aria-hidden="true"></div>
+      <div class="ai-box-info">
+        <span class="ai-title">Motor Neural</span>
+        <span class="ai-status">Pronto para predição</span>
+      </div>
+      <button class="btn-aicore-trigger" type="button" data-page="view-aicore" data-title="Núcleo de Inteligência Artificial">
+        <span class="glow-dot"></span>
+        Acessar AICore
+      </button>
+    </div>
+
+    <div class="sidebar-footer">
+      <div class="theme-switch-container">
+        <div>
+          <span class="theme-label" id="textoTema">Tema Escuro</span>
+          <span class="theme-hint">Interface do analista</span>
+        </div>
+        <label class="toggle-switch" for="btnTema">
+          <input type="checkbox" id="btnTema" checked />
+          <span class="slider" aria-hidden="true"></span>
+        </label>
+      </div>
+    </div>
+  </aside>
+
+  <div class="overlay" id="overlay"></div>
+
+  <main class="main" id="mainContent">
+    <header class="topbar">
+      <button class="menu-btn" id="menuBtn" type="button" aria-label="Abrir menu lateral">☰</button>
+      <div class="topbar-left">
+        <span class="eyebrow">API Banco do Brasil · Squad 02</span>
+        <h1 class="module-title" id="tituloPagina">Painel de Auditoria</h1>
+      </div>
+      <div class="topbar-right">
+        <button class="top-action" type="button" id="btnSincronizarApi">Sincronizar API</button>
+        <div class="status-indicator">
+          <div class="pulse-dot-green"></div>
+          <span>Sistema online</span>
+        </div>
+      </div>
+    </header>
+
+    <section id="view-dashboard" class="page active" aria-labelledby="tituloPagina">
+      <div class="page-header">
+        <div>
+          <span class="section-kicker">Visão executiva</span>
+          <h2>Resumo de risco e auditoria em tempo real</h2>
+          <p>Monitoramento de transações, bloqueios preventivos, SLA de análise e comportamento suspeito.</p>
+        </div>
+        <div class="header-date" id="headerDate"></div>
+      </div>
+
+      <div class="kpi-grid">
+        <article class="kpi-card">
+          <div class="kpi-header">
+            <h3>Volume suspeito</h3>
+            <span class="badge-trend danger">↑ 14%</span>
+          </div>
+          <p class="kpi-value" id="kpiVolumeSuspeito">1.420</p>
+          <span class="kpi-sub">Transações retidas no período</span>
+        </article>
+        <article class="kpi-card">
+          <div class="kpi-header">
+            <h3>Bloqueios preventivos</h3>
+            <span class="badge-trend warning">Estável</span>
+          </div>
+          <p class="kpi-value" id="kpiBloqueios">32</p>
+          <span class="kpi-sub">Contas em validação manual</span>
+        </article>
+        <article class="kpi-card">
+          <div class="kpi-header">
+            <h3>SLA médio equipe</h3>
+            <span class="badge-trend success">No prazo</span>
+          </div>
+          <p class="kpi-value" id="kpiSlaMedio">12m</p>
+          <span class="kpi-sub">Meta operacional menor que 15 min</span>
+        </article>
+        <article class="kpi-card">
+          <div class="kpi-header">
+            <h3>Precisão AICore</h3>
+            <span class="badge-trend info">ML ativo</span>
+          </div>
+          <p class="kpi-value">96.8%</p>
+          <span class="kpi-sub">Score de confiança do modelo</span>
+        </article>
+      </div>
+
+      <div class="dashboard-grid">
+        <article class="technical-panel chart-panel-lg">
+          <div class="panel-header">
+            <div>
+              <h3>Evolução de tentativas de fraude</h3>
+              <p>Distribuição por canal operacional</p>
+            </div>
+            <span class="panel-tag">Chart.js</span>
+          </div>
+          <div class="chart-container tall"><canvas id="chartEvolucao"></canvas></div>
+        </article>
+
+        <article class="technical-panel">
+          <div class="panel-header">
+            <div>
+              <h3>Mapa de severidade</h3>
+              <p>Classificação por risco</p>
+            </div>
+          </div>
+          <div class="chart-container compact-chart"><canvas id="chartRisco"></canvas></div>
+          <div class="risk-legend">
+            <span><i class="dot risk-low"></i> Baixo</span>
+            <span><i class="dot risk-mid"></i> Médio</span>
+            <span><i class="dot risk-high"></i> Alto</span>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section id="view-transacoes" class="page" aria-labelledby="tituloPagina">
+      <div class="control-filters-bar">
+        <div class="search-box">
+          <span aria-hidden="true">⌕</span>
+          <input type="text" class="tech-input" id="campoBuscaRisco" placeholder="Buscar por ID, cliente, conta ou canal" />
+        </div>
+        <div class="filters-group">
+          <select class="tech-select" id="filtroRisco">
+            <option value="Todos">Todos os riscos</option>
+            <option value="Alto">Críticos</option>
+            <option value="Médio">Médios</option>
+            <option value="Baixo">Baixos</option>
+          </select>
+          <button class="btn-tech primary-btn" type="button" id="btnFiltrarRisco">Filtrar</button>
+          <button class="btn-tech ghost-btn" type="button" id="btnLimparFiltroRisco">Limpar</button>
+        </div>
+      </div>
+
+      <article class="technical-panel">
+        <div class="panel-header">
+          <div>
+            <h3>Ocorrências para análise operacional</h3>
+            <p>Fila de transações suspeitas para decisão do analista</p>
+          </div>
+          <span class="panel-tag" id="badgeFilaRisco">0 registros</span>
+        </div>
+        <div class="table-container">
+          <table class="tech-table">
+            <thead>
+              <tr>
+                <th>Hash / ID</th>
+                <th>Cliente / Alvo</th>
+                <th>Conta</th>
+                <th>Canal Operação</th>
+                <th>Valor Financeiro</th>
+                <th>Score de Risco</th>
+                <th>Status</th>
+                <th class="text-right">Ações de Contingência</th>
+              </tr>
+            </thead>
+            <tbody id="tabelaFilaRisco"></tbody>
+          </table>
+        </div>
+      </article>
+
+      <article class="technical-panel">
+        <div class="panel-header">
+          <div>
+            <h3>Histórico de justificativas</h3>
+            <p>Registro local das decisões tomadas nesta sessão</p>
+          </div>
+        </div>
+        <div class="table-container">
+          <table class="tech-table compact">
+            <thead>
+              <tr>
+                <th>Horário</th>
+                <th>Analista</th>
+                <th>Ação</th>
+                <th>Justificativa</th>
+              </tr>
+            </thead>
+            <tbody id="tabelaJustificativas"></tbody>
+          </table>
+        </div>
+      </article>
+    </section>
+
+    <section id="view-operacoes" class="page" aria-labelledby="tituloPagina">
+      <div class="grid-2-col">
+        <article class="technical-panel">
+          <div class="panel-header">
+            <div>
+              <h3>Dispositivos suspeitos</h3>
+              <p>Tracking de hardware, IP e localidade</p>
+            </div>
+          </div>
+          <div class="table-container">
+            <table class="tech-table compact">
+              <thead>
+                <tr>
+                  <th>Conta origem</th>
+                  <th>Hardware / IP tracker</th>
+                  <th>Localização</th>
+                  <th>Status risco</th>
+                </tr>
+              </thead>
+              <tbody id="tabelaHardwares"></tbody>
+            </table>
+          </div>
+        </article>
+
+        <article class="technical-panel">
+          <div class="panel-header">
+            <div>
+              <h3>Auditoria de SLA por analista</h3>
+              <p>Tempo de fila e cumprimento de prazo</p>
+            </div>
+          </div>
+          <div class="table-container">
+            <table class="tech-table compact">
+              <thead>
+                <tr>
+                  <th>Referência</th>
+                  <th>Analista operacional</th>
+                  <th>Tempo em fila</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="tabelaAuditoriaSla"></tbody>
+            </table>
+          </div>
+        </article>
+      </div>
+
+      <article class="technical-panel">
+        <div class="panel-header">
+          <div>
+            <h3>Contas bloqueadas</h3>
+            <p>Contas retidas preventivamente para validação manual</p>
+          </div>
+          <span class="panel-tag" id="badgeBloqueios">0 bloqueios</span>
+        </div>
+        <div class="table-container">
+          <table class="tech-table">
+            <thead>
+              <tr>
+                <th>Conta</th>
+                <th>Titular</th>
+                <th>Motivo</th>
+                <th>Origem</th>
+                <th>Data/Hora</th>
+                <th class="text-right">Ação</th>
+              </tr>
+            </thead>
+            <tbody id="tabelaBloqueios"></tbody>
+          </table>
+        </div>
+      </article>
+    </section>
+
+    <section id="view-aicore" class="page aicore-section" aria-labelledby="tituloPagina">
+      <div class="aicore-top-banner">
+        <div class="banner-text">
+          <span class="section-kicker">Núcleo preditivo</span>
+          <h2>AICore <span>Intelligence</span></h2>
+          <p>Supervisão neural avançada, algoritmos de clustering e recomendações para bloqueio preventivo.</p>
+        </div>
+        <div class="banner-actions">
+          <button class="btn-aicore-action" type="button" id="btnGerarRelatorio">Gerar relatório</button>
+          <button class="btn-aicore-secondary" type="button" id="btnReprocessarIa">Reprocessar matriz</button>
+        </div>
+      </div>
+
+      <div class="grid-2-col">
+        <article class="glass-panel">
+          <div class="panel-header">
+            <div>
+              <h3>Matriz de ameaças</h3>
+              <p>Clusters de tráfego por perfil comportamental</p>
+            </div>
+          </div>
+          <div class="chart-container"><canvas id="chartClusters"></canvas></div>
+        </article>
+
+        <article class="glass-panel">
+          <div class="panel-header">
+            <div>
+              <h3>Monitoramento neural de alvos</h3>
+              <p>Alvos ordenados por probabilidade de fraude</p>
+            </div>
+          </div>
+          <div class="table-container">
+            <table class="tech-table glass-table">
+              <thead>
+                <tr>
+                  <th>Alvo identificado</th>
+                  <th>Score neural</th>
+                  <th>Ação recomendada</th>
+                  <th>Confiança</th>
+                </tr>
+              </thead>
+              <tbody id="tabelaIaAlvos"></tbody>
+            </table>
+          </div>
+        </article>
+      </div>
+
+      <article class="glass-panel full-width-panel">
+        <div class="panel-header">
+          <div>
+            <h3>Log técnico do AICore</h3>
+            <p>Explicabilidade do modelo e eventos de inferência</p>
+          </div>
+        </div>
+        <div class="ai-log-grid" id="listaLogsIa"></div>
+      </article>
+    </section>
+  </main>
+
+  <div class="toast" id="toastBox" role="status" aria-live="polite">Notificação</div>
+
+  <script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,28 @@
+:root {
+
+    --bg-dark: #000000;
+
+    --surface: #0c0c0c;
+
+    --header-bg: #080808;
+
+    --border: #1e1e1e;
+
+    --text-high: #ffffff;
+
+    --text-low: #cccccc;
+
+    --cyan: #00ffff;
+
+    --teal: #20c997;
+
+    --gold: #F8C200;
+
+    --danger: #ff4d4d;
+
+    --warning: #ffcc00;
+
+    --success: #00ff99;
+
+    --glass: rgba(255, 255, 255, 0.03);
+}

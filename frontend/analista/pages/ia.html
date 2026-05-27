@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Central IA</title>
+
+    <link
+        rel="stylesheet"
+        href="../css/main.css"
+    >
+
+    <link
+        rel="stylesheet"
+        href="../css/ia.css"
+    >
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+</head>
+
+<body>
+
+    <div class="layout">
+
+        <!-- SIDEBAR -->
+        <aside class="sidebar">
+
+            <h2>
+                Painel Analista
+            </h2>
+
+            <nav>
+
+                <a href="./dashboard.html">
+                    Dashboard
+                </a>
+
+                <a href="./transacoes.html">
+                    Transações
+                </a>
+
+                <a href="./relatorios.html">
+                    Relatórios
+                </a>
+
+                <a
+                    href="./ia.html"
+                    class="active"
+                >
+                    IA Antifraude
+                </a>
+
+            </nav>
+
+        </aside>
+
+        <!-- MAIN -->
+
+        <main class="main-content">
+
+            <header class="page-header">
+
+                <h1>
+                    Central de Inteligência Artificial
+                </h1>
+
+            </header>
+
+            <!-- CARDS -->
+
+            <section class="cards">
+
+                <div class="card">
+
+                    <h3>Total</h3>
+
+                    <p id="totalTransacoes">
+                        0
+                    </p>
+
+                </div>
+
+                <div class="card">
+
+                    <h3>Suspeitas</h3>
+
+                    <p id="suspeitas">
+                        0
+                    </p>
+
+                </div>
+
+                <div class="card">
+
+                    <h3>Bloqueadas</h3>
+
+                    <p id="bloqueadas">
+                        0
+                    </p>
+
+                </div>
+
+                <div class="card">
+
+                    <h3>Taxa Fraude</h3>
+
+                    <p id="taxaFraude">
+                        0%
+                    </p>
+
+                </div>
+
+            </section>
+
+            <!-- GRÁFICO -->
+
+            <section class="chart-section">
+
+                <canvas id="riskChart"></canvas>
+
+            </section>
+
+            <!-- TABELA -->
+
+            <section class="table-section">
+
+                <table>
+
+                    <thead>
+
+                        <tr>
+
+                            <th>ID</th>
+                            <th>Conta</th>
+                            <th>Valor</th>
+                            <th>Cidade</th>
+                            <th>Risco</th>
+
+                        </tr>
+
+                    </thead>
+
+                    <tbody id="historyTableBody">
+
+                    </tbody>
+
+                </table>
+
+            </section>
+
+        </main>
+
+    </div>
+
+    <script
+        type="module"
+        src="../js/ia/dashboardIA.js"
+    ></script>
+
+</body>
+
+</html>

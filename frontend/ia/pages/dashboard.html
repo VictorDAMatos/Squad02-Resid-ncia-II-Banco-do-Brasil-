@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+
+<html lang="pt-BR">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <title>Painel IA</title>
+
+    <link rel="stylesheet" href="../css/variables.css">
+
+    <link rel="stylesheet" href="../css/layout.css">
+
+    <link rel="stylesheet" href="../css/dashboard.css">
+
+    <link rel="stylesheet" href="../css/table.css">
+
+</head>
+
+<body>
+
+    <div class="sidebar">
+
+    <div class="logo">
+
+        IA Shield
+    </div>
+
+    <div class="menu">
+
+        <div class="menu-item active">
+            Dashboard
+        </div>
+
+        <div class="menu-item">
+            Análises
+        </div>
+
+        <div class="menu-item">
+            Alertas
+        </div>
+
+        <div class="menu-item">
+            Contas
+        </div>
+
+        <div class="menu-item">
+            Configurações
+        </div>
+
+    </div>
+
+</div>
+
+    <div class="main-content">
+
+        <h1 class="dashboard-title">
+    Central Inteligente Antifraude
+</h1>
+
+        <br>
+
+        <div class="dashboard-cards">
+
+            <div class="stat-card">
+
+                <h2 id="totalTransacoes">0</h2>
+
+                <p>Total Transações</p>
+
+            </div>
+
+            <div class="stat-card">
+
+                <h2 id="suspeitas">0</h2>
+
+                <p>Suspeitas</p>
+
+            </div>
+
+            <div class="stat-card">
+
+                <h2 id="bloqueadas">0</h2>
+
+                <p>Bloqueadas</p>
+
+            </div>
+
+            <div class="stat-card">
+
+                <h2 id="taxaFraude">0%</h2>
+
+                <p>Taxa Fraude</p>
+
+            </div>
+
+        </div>
+
+        <div class="chart-container">
+
+            <canvas id="riskChart"></canvas>
+
+        </div>
+
+        <table>
+
+            <thead>
+
+                <tr>
+
+                    <th>ID</th>
+
+                    <th>Conta</th>
+
+                    <th>Valor</th>
+
+                    <th>Cidade</th>
+
+                    <th>Risco</th>
+
+                </tr>
+
+            </thead>
+
+            <tbody id="historyTableBody">
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script type="module" src="../js/dashboard.js"></script>
+
+</body>
+
+</html>

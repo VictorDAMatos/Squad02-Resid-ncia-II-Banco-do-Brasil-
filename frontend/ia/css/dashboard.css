@@ -1,0 +1,152 @@
+.sidebar {
+
+    position: fixed;
+
+    left: 0;
+
+    top: 0;
+
+    width: 260px;
+
+    height: 100vh;
+
+    background:
+        rgba(255,255,255,0.03);
+
+    border-right:
+        1px solid rgba(255,255,255,0.06);
+
+    backdrop-filter: blur(20px);
+
+    padding: 30px;
+}
+
+.logo {
+
+    font-size: 28px;
+
+    font-weight: bold;
+
+    color: var(--cyan);
+
+    margin-bottom: 60px;
+}
+
+.menu {
+
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 15px;
+}
+
+.menu-item {
+
+    padding: 18px;
+
+    border-radius: 16px;
+
+    cursor: pointer;
+
+    transition: 0.3s;
+
+    color: #ccc;
+}
+
+.menu-item:hover {
+
+    background:
+        rgba(0,255,255,0.08);
+
+    color: white;
+}
+
+.menu-item.active {
+
+    background:
+        rgba(0,255,255,0.12);
+
+    border:
+        1px solid rgba(0,255,255,0.3);
+
+    color: white;
+}
+
+.main-content {
+
+    margin-left: 280px;
+}
+
+table {
+
+    width: 100%;
+
+    border-collapse: collapse;
+
+    background: rgba(255,255,255,0.03);
+
+    border-radius: 24px;
+
+    overflow: hidden;
+
+    backdrop-filter: blur(10px);
+}
+
+thead {
+
+    background: rgba(255,255,255,0.05);
+}
+
+th {
+
+    color: var(--cyan);
+
+    padding: 20px;
+
+    text-align: left;
+
+    font-size: 14px;
+
+    letter-spacing: 1px;
+}
+
+td {
+
+    padding: 18px;
+
+    border-top: 1px solid rgba(255,255,255,0.05);
+
+    color: var(--text-low);
+}
+
+tr {
+
+    transition: 0.2s;
+}
+
+tr:hover {
+
+    background: rgba(255,255,255,0.03);
+}
+
+.risk-low {
+
+    color: #00ff99;
+
+    font-weight: bold;
+}
+
+.risk-medium {
+
+    color: #ffcc00;
+
+    font-weight: bold;
+}
+
+.risk-high {
+
+    color: #ff4d4d;
+
+    font-weight: bold;
+}
