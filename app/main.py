@@ -1,4 +1,5 @@
 from fastapi import FastAPI, Request
+<<<<<<< HEAD
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -10,6 +11,14 @@ from app.services.registro_service import inicializar_tabelas_registro, registra
 BASE_DIR = Path(__file__).resolve().parents[1]
 FRONTEND_DIR = BASE_DIR / "frontend"
 
+=======
+from fastapi.responses import HTMLResponse
+from fastapi.middleware.cors import CORSMiddleware
+from time import perf_counter
+from app.api.routers import clientes, transacoes, inteligencia, analista, core_bancario, anomalies, registros, risco, status
+from app.services.registro_service import inicializar_tabelas_registro, registrar_auditoria, registrar_log_operacao
+
+>>>>>>> cfce345ebedc0fae6774daa52362edc1076d114b
 # CONFIGURAÇÃO DE METADADOS
 descricao_api = """
 ### API Banco do Brasil - Squad 02 🚀
@@ -19,7 +28,11 @@ Sistema modular de Core Bancário e Detecção de Fraudes com IA.
 app = FastAPI(
     title="API Banco do Brasil",
     description=descricao_api,
+<<<<<<< HEAD
     version="2.1.0"
+=======
+    version="2.0.0"
+>>>>>>> cfce345ebedc0fae6774daa52362edc1076d114b
 )
 
 app.add_middleware(
@@ -100,24 +113,35 @@ async def middleware_logs_e_auditoria(request: Request, call_next):
 # CONEXÃO DOS ROUTERS
 app.include_router(clientes.router)
 app.include_router(transacoes.router)
+<<<<<<< HEAD
 app.include_router(analista.router)
 app.include_router(core_bancario.router)
+=======
+app.include_router(inteligencia.router)
+app.include_router(analista.router)
+app.include_router(core_bancario.router)
+app.include_router(transacoes.router)
+>>>>>>> cfce345ebedc0fae6774daa52362edc1076d114b
 app.include_router(anomalies.router)
 app.include_router(registros.router)
 app.include_router(risco.router)
 app.include_router(status.router)
+<<<<<<< HEAD
 app.include_router(ia.router)
 app.include_router(dashboard_ia.router)
 app.include_router(analise_manual.router)
 
 if FRONTEND_DIR.exists():
     app.mount("/frontend", StaticFiles(directory=str(FRONTEND_DIR)), name="frontend")
+=======
+>>>>>>> cfce345ebedc0fae6774daa52362edc1076d114b
 
 # ROTA RAIZ
 @app.get("/", tags=["Status"])
 def root():
     return {
         "status": "Online",
+<<<<<<< HEAD
         "versao": "2.1.0",
         "projeto": "Modular Architecture (Layered)",
         "docs": "/docs",
@@ -136,6 +160,12 @@ def abrir_front_usuario():
 def abrir_front_analista():
     return RedirectResponse(url="/frontend/analista/index.html")
 
+=======
+        "versao": "2.0.0",
+        "projeto": "Modular Architecture (Layered)"
+    }
+
+>>>>>>> cfce345ebedc0fae6774daa52362edc1076d114b
 # SCALAR
 @app.get("/scalar", include_in_schema=False)
 def documentacao_scalar():

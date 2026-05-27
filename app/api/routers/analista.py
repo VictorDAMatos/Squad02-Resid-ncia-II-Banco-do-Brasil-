@@ -3,6 +3,7 @@ from typing import Optional
 from fastapi import APIRouter, Query
 import sqlite3
 
+<<<<<<< HEAD
 from app.services.fraude_service import (
     desbloquear_conta_manual,
     inicializar_tabelas_fraude,
@@ -10,6 +11,8 @@ from app.services.fraude_service import (
     processar_todas_transacoes,
 )
 
+=======
+>>>>>>> cfce345ebedc0fae6774daa52362edc1076d114b
 router = APIRouter(prefix="/analista", tags=["Painel do Analista (US04)"])
 
 DB_PATH = "data/banco_brasil_transacoes.sqlite"
@@ -19,6 +22,7 @@ DB_PATH = "data/banco_brasil_transacoes.sqlite"
 
 @router.get("/contas-bloqueadas")
 def listar_bloqueios():
+<<<<<<< HEAD
     conn = conectar_banco()
     inicializar_tabelas_fraude(conn)
     rows = conn.execute("SELECT * FROM contas_bloqueadas WHERE status = 'Bloqueada' ORDER BY id DESC").fetchall()
@@ -33,6 +37,16 @@ def desbloquear_conta(conta: str, justificativa: str = "Desbloqueio manual pelo 
     conn.commit()
     conn.close()
     return {"mensagem": f"Conta {conta} desbloqueada manualmente."}
+=======
+    # Lista de contas suspensas por risco 3
+    return {"bloqueadas": []}
+
+
+@router.post("/desbloquear/{conta_id}")
+def desbloquear_conta(conta_id: int):
+    # Função para o analista reativar conta.
+    return {"mensagem": f"Conta {conta_id} desbloqueada manualmente."}
+>>>>>>> cfce345ebedc0fae6774daa52362edc1076d114b
 
 
 # ── HELPERS ────────────────────────────────────────────────────────────────
@@ -55,8 +69,11 @@ def colunas_transactions(conn) -> set[str]:
 def resumo_movimentacoes():
     """Retorna um resumo completo das movimentações para o painel do analista."""
     conn = conectar_banco()
+<<<<<<< HEAD
     inicializar_tabelas_fraude(conn)
     processar_todas_transacoes(conn)
+=======
+>>>>>>> cfce345ebedc0fae6774daa52362edc1076d114b
     cursor = conn.cursor()
 
     cursor.execute(
@@ -75,7 +92,11 @@ def resumo_movimentacoes():
         """
         SELECT COUNT(*) AS total_anomalias
         FROM transactions
+<<<<<<< HEAD
         WHERE classificacao_risco IN ('amarelo', 'vermelho')
+=======
+        WHERE valor > 5000 OR hora BETWEEN '00:00' AND '05:59'
+>>>>>>> cfce345ebedc0fae6774daa52362edc1076d114b
         """
     )
     kpis["total_anomalias"] = cursor.fetchone()["total_anomalias"]
@@ -151,6 +172,7 @@ def resumo_movimentacoes():
 def anomalias_detalhadas():
     """Lista as anomalias com a regra que as identificou."""
     conn = conectar_banco()
+<<<<<<< HEAD
     inicializar_tabelas_fraude(conn)
     processar_todas_transacoes(conn)
     cursor = conn.cursor()
@@ -160,6 +182,21 @@ def anomalias_detalhadas():
         FROM transactions
         WHERE classificacao_risco IN ('amarelo', 'vermelho')
         ORDER BY id DESC
+=======
+    cursor = conn.cursor()
+    cursor.execute(
+        """
+        SELECT *,
+            CASE
+                WHEN valor > 10000 THEN 'Valor Muito Alto (>R$10.000)'
+                WHEN hora BETWEEN '00:00' AND '05:59' THEN 'Horário Suspeito (Madrugada)'
+                WHEN dispositivo = 'caixa_eletronico' AND valor > 5000 THEN 'Saque Alto em Caixa Eletrônico'
+                ELSE 'Valor Alto (>R$5.000)'
+            END AS regra_alerta
+        FROM transactions
+        WHERE valor > 5000 OR hora BETWEEN '00:00' AND '05:59'
+        ORDER BY valor DESC
+>>>>>>> cfce345ebedc0fae6774daa52362edc1076d114b
         LIMIT 50
         """
     )
@@ -192,8 +229,11 @@ def transacoes_filtradas(
 ):
     """Filtra transações por CPF/conta, categoria e faixa de valor."""
     conn = conectar_banco()
+<<<<<<< HEAD
     inicializar_tabelas_fraude(conn)
     processar_todas_transacoes(conn)
+=======
+>>>>>>> cfce345ebedc0fae6774daa52362edc1076d114b
     cursor = conn.cursor()
     colunas = colunas_transactions(conn)
 

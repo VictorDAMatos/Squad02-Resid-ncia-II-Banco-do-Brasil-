@@ -135,7 +135,7 @@ function renderAnomalias(anomalias) {
     badge.textContent = `${anomalias.length} alertas`;
 
     if (anomalias.length === 0) {
-        corpo.innerHTML = '<tr><td colspan="11" style="text-align:center;padding:24px;color:#2ecc71">✅ Nenhuma anomalia detectada. Sistema seguro.</td></tr>';
+        corpo.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:24px;color:#2ecc71">✅ Nenhuma anomalia detectada. Sistema seguro.</td></tr>';
         return;
     }
 
@@ -280,7 +280,7 @@ async function aplicarFiltros() {
     const badge = document.getElementById('badge-transacoes');
     const aviso = document.getElementById('aviso-filtros');
 
-    if (corpo) corpo.innerHTML = '<tr><td colspan="11" style="text-align:center;padding:20px;color:#7a8fa8">Carregando transações filtradas…</td></tr>';
+    if (corpo) corpo.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:20px;color:#7a8fa8">Carregando transações filtradas…</td></tr>';
     if (aviso) aviso.innerHTML = '';
 
     try {
@@ -300,7 +300,7 @@ async function aplicarFiltros() {
         // atualiza o cartão de Gasto Médio Diário com base nas transações filtradas
         renderGastoMedioDiario(transacoes, cpf);
     } catch (erro) {
-        if (corpo) corpo.innerHTML = `<tr><td colspan="11" style="text-align:center;padding:20px;color:#e74c3c">Erro ao aplicar filtros: ${escaparHTML(erro.message)}</td></tr>`;
+        if (corpo) corpo.innerHTML = `<tr><td colspan="9" style="text-align:center;padding:20px;color:#e74c3c">Erro ao aplicar filtros: ${escaparHTML(erro.message)}</td></tr>`;
         console.error('Erro ao aplicar filtros:', erro);
     }
 }
@@ -310,7 +310,7 @@ function renderTransacoes(transacoes) {
     if (!corpo) return;
 
     if (transacoes.length === 0) {
-        corpo.innerHTML = '<tr><td colspan="11" style="text-align:center;padding:24px;color:#7a8fa8">Nenhuma transação encontrada para os filtros selecionados.</td></tr>';
+        corpo.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:24px;color:#7a8fa8">Nenhuma transação encontrada para os filtros selecionados.</td></tr>';
         return;
     }
 
@@ -325,8 +325,6 @@ function renderTransacoes(transacoes) {
             <td>${escaparHTML(transacao.cidade)}</td>
             <td>${escaparHTML(transacao.tipo_transacao)}</td>
             <td>${escaparHTML(transacao.dispositivo)}</td>
-            <td><span class="pill ${transacao.classificacao_risco === 'vermelho' ? 'pill-danger' : transacao.classificacao_risco === 'amarelo' ? 'pill-warning' : 'pill-info'}">${escaparHTML(transacao.classificacao_risco || 'verde')}</span></td>
-            <td>${escaparHTML(transacao.status_transacao || 'aprovada')} / ${escaparHTML(transacao.status_conta || 'Ativa')}</td>
         </tr>
     `).join('');
 }
