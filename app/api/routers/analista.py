@@ -18,8 +18,16 @@ def listar_bloqueios():
 
 @router.post("/desbloquear/{conta_id}")
 def desbloquear_conta(conta_id: int):
-    # Função para o analista reativar conta.
-    return {"mensagem": f"Conta {conta_id} desbloqueada manualmente."}
+    conexao = sqlite3.connect('data/banco_brasil_transacoes.sqlite')
+    cursor = conexao.cursor()
+
+    # Atualiza o status da conta usando o ID da transação
+    cursor.execute("UPDATE transactions SET status_conta = 'Ativa' WHERE id = ?", (conta_id,))
+    
+    conexao.commit()
+    conexao.close()
+
+    return {"mensagem": f"Conta {conta_id} desbloqueada."}
 
 
 # ── HELPERS ────────────────────────────────────────────────────────────────
