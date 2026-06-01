@@ -3,7 +3,6 @@ import sqlite3
 from datetime import datetime
 from enum import Enum
 
-# IMPORTAÇÃO COMPLETA: Importamos a função de risco e as duas funções de status do seu arquivo
 from app.api.routers.risco import classificar
 from app.api.routers.status import listar_status_conta, classificar_status_transacao
 
@@ -22,7 +21,7 @@ class OpcoesTipoTransacao(str, Enum):
     cartao_credito = "cartao_credito"
     cartao_debito = "cartao_debito"
 
-# Opções fixas para a Categoria do Gasto
+# Opções fixas para a Categoria
 class OpcoesCategoria(str, Enum):
     transporte = "transporte"
     vestuario = "vestuario"
@@ -42,10 +41,10 @@ def processar_vigilancia(transacao_id: int, conta: str, valor: float, hora: str,
         "dispositivo": dispositivo
     }
 
-    # 1. Executa a sua função oficial de classificação de risco (retorna a cor)
+    # 1. Executa a sua função classificação de risco (retorna a cor)
     cor_risco, motivo_risco = classificar(transacao_dict)
 
-    # 2. Usa a SUA função do status.py para descobrir o status em formato de texto ('pendente', 'em análise', 'aprovada')
+    # 2. Usa a função do status para descobrir o status em formato de texto ('pendente', 'em análise', 'aprovada')
     dados_para_status = {"classificacao_risco": cor_risco}
     status_transacao_final = classificar_status_transacao(dados_para_status)
 
@@ -60,7 +59,7 @@ def processar_vigilancia(transacao_id: int, conta: str, valor: float, hora: str,
             except sqlite3.OperationalError:
                 pass
 
-        # 3. Atualiza a transação com todos os dados finais calculados, evitando campos nulos
+        # 3. Atualiza a transação com todos os dados
         cursor.execute("""
             UPDATE transactions 
             SET classificacao_risco = ?, motivo_risco = ?, status_transacao = ?
@@ -123,21 +122,15 @@ def monitorar_nova_transacao(
         raise HTTPException(
             status_code=403, 
             detail=f"Operação Recusada. A conta {conta} encontra-se BLOQUEADA por suspeita de fraude."
-        )
-
-    # ----------------------------------------------------------------------
-    # SOLUÇÃO: TRAZER A CLASSIFICAÇÃO PARA ANTES DO RETORNO DA TELA
-    # ----------------------------------------------------------------------
+        
     transacao_dict = {
         "valor": valor,
         "hora": hora_atual,
         "dispositivo": dispositivo.value
     }
     
-    # Descobre o risco AGORA para o Swagger saber o resultado imediatamente
     cor_risco, motivo_risco = classificar(transacao_dict)
     
-    # Descobre o status textual oficial usando sua regra do status.py
     dados_para_status = {"classificacao_risco": cor_risco}
     status_transacao_real = classificar_status_transacao(dados_para_status)
     # ----------------------------------------------------------------------
@@ -146,7 +139,7 @@ def monitorar_nova_transacao(
         cursor.execute("PRAGMA table_info(transactions)")
         colunas_info = cursor.fetchall()
         
-        # Agora o dicionário já vai com os valores reais calculados!
+        # Dados salvos da conta
         dados_para_salvar = {
             "conta": conta,
             "valor": valor,
@@ -192,8 +185,6 @@ def monitorar_nova_transacao(
 
     conexao.close()
 
-    # O trabalho pesado de varrer a tabela inteira somando cartões e bloqueando a conta (status.py) 
-    # continua em segundo plano para o endpoint não ficar lento!
     background_tasks.add_task(listar_status_conta)
 
     return {
