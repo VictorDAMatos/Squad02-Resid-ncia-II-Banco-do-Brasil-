@@ -32,7 +32,7 @@
       </div>
       <div class="user-info">
         <p class="user-name">Julia Andrade</p>
-        <p class="user-detail">Advogada</p>
+        <p class="user-detail">Analista Administrativa</p>
         <p class="user-account">Ag. 0042-3 · CC 58392-1</p>
       </div>
     </div>
@@ -151,14 +151,14 @@
           <span class="qa-title">Extrato</span>
           <small>Consultar movimentações recentes.</small>
         </button>
-        <button class="qa-btn" onclick="openBoletoModal()">
+        <button class="qa-btn" onclick="showToast('Função disponível em breve.')">
           <div class="qa-icon-wrap">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
           </div>
           <span class="qa-title">Boleto</span>
           <small>Gerar e pagar boletos.</small>
         </button>
-        <button class="qa-btn" onclick="openEmprestimoModal()">
+        <button class="qa-btn" onclick="showToast('Função disponível em breve.')">
           <div class="qa-icon-wrap">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
           </div>
@@ -379,170 +379,5 @@
 
   <div class="toast" id="toast"></div>
   <script src="js/app.js"></script>
-
-  <div class="modal-backdrop" id="modal-boleto">
-    <div class="modal">
-      <div class="modal-header-bar" style="background:var(--bb-blue);">
-        <span style="color:#fff;font-size:12px;font-weight:600;">&#9632; Boleto Bancário</span>
-      </div>
-
-      <div class="modal-icon" style="background:#e8f0fe;">
-        <svg viewBox="0 0 24 24" fill="none" stroke="var(--bb-blue)" stroke-width="1.5" width="26" height="26">
-          <rect x="2" y="5" width="20" height="14" rx="2"/>
-          <line x1="2" y1="10" x2="22" y2="10"/>
-        </svg>
-      </div>
-
-      <h2 class="modal-title">Boleto Bancário</h2>
-
-      <div style="display:flex;gap:8px;margin-bottom:18px;">
-        <button id="aba-gerar" onclick="abrirAbaBoleto('gerar')"
-          style="flex:1;padding:8px;border-radius:8px;border:1.5px solid var(--bb-blue);background:var(--bb-blue);color:#fff;font-size:13px;font-weight:600;cursor:pointer;">
-          Gerar Boleto
-        </button>
-        <button id="aba-pagar" onclick="abrirAbaBoleto('pagar')"
-          style="flex:1;padding:8px;border-radius:8px;border:1.5px solid var(--border);background:transparent;color:var(--text-secondary);font-size:13px;font-weight:600;cursor:pointer;">
-          Pagar Boleto
-        </button>
-      </div>
-
-      <div id="painel-gerar">
-        <div style="margin-bottom:12px;">
-          <label style="font-size:12px;font-weight:600;color:var(--text-muted);display:block;margin-bottom:4px;">BENEFICIÁRIO</label>
-          <input id="boletoNome" type="text" placeholder="Nome ou empresa" class="input-field"
-            style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;outline:none;"/>
-        </div>
-        <div style="margin-bottom:12px;">
-          <label style="font-size:12px;font-weight:600;color:var(--text-muted);display:block;margin-bottom:4px;">VALOR</label>
-          <input id="boletoValor" type="number" placeholder="R$ 0,00" min="0.01" step="0.01" class="input-field"
-            style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;outline:none;"/>
-        </div>
-        <div style="margin-bottom:16px;">
-          <label style="font-size:12px;font-weight:600;color:var(--text-muted);display:block;margin-bottom:4px;">VENCIMENTO</label>
-          <input id="boletoVencimento" type="date" class="input-field"
-            style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;outline:none;"/>
-        </div>
-
-        <div id="boletoResultado" style="display:none;background:#f0f5ff;border:1px solid #c5d5f5;border-radius:8px;padding:12px;margin-bottom:16px;">
-          <p style="font-size:11px;font-weight:700;color:var(--bb-blue);margin-bottom:6px;text-transform:uppercase;">Código do Boleto</p>
-          <p id="boletoCodigoGerado" style="font-size:11px;font-family:monospace;word-break:break-all;color:var(--text-primary);"></p>
-          <button onclick="copiarCodigo()" style="margin-top:8px;padding:6px 12px;background:var(--bb-blue);color:#fff;border:none;border-radius:6px;font-size:12px;cursor:pointer;">
-            Copiar código
-          </button>
-        </div>
-
-        <div class="modal-actions">
-          <button class="btn-secondary" onclick="closeModal('modal-boleto')">Fechar</button>
-          <button class="btn-primary" onclick="gerarBoleto()">Gerar Boleto</button>
-        </div>
-      </div>
-
-      <div id="painel-pagar" style="display:none;">
-        <div style="margin-bottom:12px;">
-          <label style="font-size:12px;font-weight:600;color:var(--text-muted);display:block;margin-bottom:4px;">CÓDIGO DO BOLETO</label>
-          <input id="boletoCodigo" type="text" placeholder="Cole o código aqui"
-            style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;outline:none;font-family:monospace;"/>
-        </div>
-
-        <p style="font-size:12px;font-weight:600;color:var(--text-muted);margin-bottom:8px;text-transform:uppercase;">Meus Boletos</p>
-        <div id="boletoLista" style="max-height:160px;overflow-y:auto;margin-bottom:16px;">
-          <p style="color:var(--text-muted);font-size:0.85rem;">Carregando...</p>
-        </div>
-
-        <div class="modal-actions">
-          <button class="btn-secondary" onclick="closeModal('modal-boleto')">Fechar</button>
-          <button class="btn-primary" onclick="pagarBoleto()">Pagar</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div class="modal-backdrop" id="modal-emprestimo">
-    <div class="modal">
-      <div class="modal-header-bar" style="background:var(--bb-blue);">
-        <span style="color:#fff;font-size:12px;font-weight:600;">&#36; Crédito Pessoal</span>
-      </div>
-
-      <div class="modal-icon" style="background:#e8f0fe;">
-        <svg viewBox="0 0 24 24" fill="none" stroke="var(--bb-blue)" stroke-width="1.5" width="26" height="26">
-          <circle cx="12" cy="12" r="10"/>
-          <line x1="12" y1="8" x2="12" y2="16"/>
-          <line x1="8" y1="12" x2="16" y2="12"/>
-        </svg>
-      </div>
-
-      <h2 class="modal-title">Simular Empréstimo</h2>
-
-      <div style="margin-bottom:12px;">
-        <label style="font-size:12px;font-weight:600;color:var(--text-muted);display:block;margin-bottom:4px;">VALOR DESEJADO</label>
-        <input id="empValor" type="number" placeholder="R$ 0,00" min="100" step="100"
-          style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;outline:none;"/>
-      </div>
-
-      <div style="margin-bottom:16px;">
-        <label style="font-size:12px;font-weight:600;color:var(--text-muted);display:block;margin-bottom:4px;">NÚMERO DE PARCELAS</label>
-        <select id="empParcelas"
-          style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;outline:none;background:#fff;">
-          <option value="">Selecione...</option>
-          <option value="6">6x  — taxa 1,99% a.m.</option>
-          <option value="12">12x — taxa 2,29% a.m.</option>
-          <option value="24">24x — taxa 2,59% a.m.</option>
-          <option value="36">36x — taxa 2,89% a.m.</option>
-          <option value="48">48x — taxa 3,19% a.m.</option>
-          <option value="60">60x — taxa 3,49% a.m.</option>
-        </select>
-      </div>
-
-      <div id="empResultado" style="display:none;background:#f0f5ff;border:1px solid #c5d5f5;border-radius:10px;padding:14px;margin-bottom:16px;">
-        <p style="font-size:11px;font-weight:700;color:var(--bb-blue);margin-bottom:10px;text-transform:uppercase;">Resultado da Simulação</p>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-          <div style="background:#fff;border-radius:8px;padding:10px;text-align:center;">
-            <p style="font-size:10px;color:var(--text-muted);margin-bottom:4px;">PARCELA MENSAL</p>
-            <p id="empResultadoValor" style="font-size:18px;font-weight:700;color:var(--bb-blue);"></p>
-          </div>
-          <div style="background:#fff;border-radius:8px;padding:10px;text-align:center;">
-            <p style="font-size:10px;color:var(--text-muted);margin-bottom:4px;">TOTAL A PAGAR</p>
-            <p id="empResultadoTotal" style="font-size:18px;font-weight:700;color:var(--red);"></p>
-          </div>
-          <div style="background:#fff;border-radius:8px;padding:10px;text-align:center;">
-            <p style="font-size:10px;color:var(--text-muted);margin-bottom:4px;">PARCELAMENTO</p>
-            <p id="empResultadoParcelas" style="font-size:13px;font-weight:600;color:var(--text-primary);"></p>
-          </div>
-          <div style="background:#fff;border-radius:8px;padding:10px;text-align:center;">
-            <p style="font-size:10px;color:var(--text-muted);margin-bottom:4px;">TAXA MENSAL</p>
-            <p id="empResultadoTaxa" style="font-size:13px;font-weight:600;color:var(--text-primary);"></p>
-          </div>
-        </div>
-      </div>
-
-      <div class="modal-actions">
-        <button class="btn-secondary" onclick="closeModal('modal-emprestimo')">Fechar</button>
-        <button class="btn-primary" onclick="simularEmprestimo()">Simular</button>
-      </div>
-    </div>
-  </div>
-
-<script>
-function abrirAbaBoleto(aba) {
-  document.getElementById('painel-gerar').style.display = aba === 'gerar' ? 'block' : 'none';
-  document.getElementById('painel-pagar').style.display = aba === 'pagar' ? 'block' : 'none';
-  document.getElementById('aba-gerar').style.background = aba === 'gerar' ? 'var(--bb-blue)' : 'transparent';
-  document.getElementById('aba-gerar').style.color      = aba === 'gerar' ? '#fff' : 'var(--text-secondary)';
-  document.getElementById('aba-pagar').style.background = aba === 'pagar' ? 'var(--bb-blue)' : 'transparent';
-  document.getElementById('aba-pagar').style.color      = aba === 'pagar' ? '#fff' : 'var(--text-secondary)';
-  if (aba === 'pagar') carregarBoletos();
-}
-
-function copiarCodigo() {
-  const codigo = document.getElementById('boletoCodigoGerado').textContent;
-  navigator.clipboard.writeText(codigo).then(() => showToast('Código copiado!'));
-}
-
-const originalOpenBoletoModal = window.openBoletoModal;
-window.openBoletoModal = function() {
-  abrirAbaBoleto('gerar');
-  openModal('modal-boleto');
-};
-</script>
 </body>
 </html>

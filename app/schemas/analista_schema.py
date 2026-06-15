@@ -29,12 +29,10 @@ class AgrupamentoQuantidade(BaseModel):
 
 class ResumoAnalistaResponse(BaseModel):
     kpis: KPIResumo
-    # Mantido como dict para não remover campos usados pelo frontend
-    # original, como categoria, cidade, dispositivo e tipo_transacao.
-    por_categoria: list[dict[str, Any]]
-    por_cidade: list[dict[str, Any]]
-    por_dispositivo: list[dict[str, Any]]
-    por_tipo: list[dict[str, Any]]
+    por_categoria: list[AgrupamentoQuantidadeVolume]
+    por_cidade: list[AgrupamentoQuantidadeVolume]
+    por_dispositivo: list[AgrupamentoQuantidade]
+    por_tipo: list[AgrupamentoQuantidadeVolume]
     por_hora: list[dict[str, Any]]
     ultimas_transacoes: list[dict[str, Any]]
 
