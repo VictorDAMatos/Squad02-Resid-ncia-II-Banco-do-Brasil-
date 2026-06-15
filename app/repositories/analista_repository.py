@@ -10,8 +10,7 @@ from typing import Any, Generator, Iterable
 import sqlite3
 
 
-BASE_DIR = Path(__file__).resolve().parents[2]
-DB_PATH = BASE_DIR / "data" / "banco_brasil_transacoes.sqlite"
+DB_PATH = Path(__file__).resolve().parents[2] / "data" / "banco_brasil_transacoes.sqlite"
 
 
 class AnalistaRepository:
@@ -63,6 +62,12 @@ class AnalistaRepository:
             return kpis
 
     def agrupar_com_volume(self, coluna: str, limite: int | None = None) -> list[dict[str, Any]]:
+        """Agrupa por uma coluna e mantém o nome original do campo.
+
+        O frontend enviado pelo time espera chaves como categoria, cidade e
+        tipo_transacao. Por isso o retorno preserva essas chaves e também
+        adiciona nome para manter compatibilidade com a camada refatorada.
+        """
         limite_sql = " LIMIT ?" if limite else ""
         parametros: list[Any] = [limite] if limite else []
 
@@ -71,6 +76,7 @@ class AnalistaRepository:
             cursor.execute(
                 f"""
                 SELECT
+                    {coluna} AS {coluna},
                     {coluna} AS nome,
                     COUNT(*) AS qtd,
                     COALESCE(SUM(valor), 0) AS volume
@@ -84,11 +90,12 @@ class AnalistaRepository:
             return self._rows_para_dict(cursor.fetchall())
 
     def agrupar_quantidade(self, coluna: str) -> list[dict[str, Any]]:
+        """Agrupa por quantidade preservando o nome original do campo."""
         with self.conectar() as conn:
             cursor = conn.cursor()
             cursor.execute(
                 f"""
-                SELECT {coluna} AS nome, COUNT(*) AS qtd
+                SELECT {coluna} AS {coluna}, {coluna} AS nome, COUNT(*) AS qtd
                 FROM transactions
                 GROUP BY {coluna}
                 ORDER BY qtd DESC
