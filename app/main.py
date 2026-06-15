@@ -2,8 +2,9 @@ from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
 from time import perf_counter
-from app.api.routers import clientes, transacoes, inteligencia, analista, core_bancario, anomalies, registros, risco, status, historico, antibot, monitoramento
+from app.api.routers import clientes, transacoes, inteligencia, analista, core_bancario, anomalies, registros, risco, status, historico, antibot, monitoramento, seguranca
 from app.services.registro_service import inicializar_tabelas_registro, registrar_auditoria, registrar_log_operacao
+from app.core.security import configurar_camadas_de_seguranca
 
 # CONFIGURAÇÃO DE METADADOS
 descricao_api = """
@@ -24,6 +25,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# CAMADAS DE SEGURANÇA (RNF 6.3)
+configurar_camadas_de_seguranca(app)
 
 
 def _nome_acao(metodo: str) -> str:
@@ -106,6 +110,7 @@ app.include_router(status.router)
 app.include_router(historico.router)
 app.include_router(antibot.router)
 app.include_router(monitoramento.router)
+app.include_router(seguranca.router)
 
 # ROTA RAIZ
 @app.get("/", tags=["Status"])
