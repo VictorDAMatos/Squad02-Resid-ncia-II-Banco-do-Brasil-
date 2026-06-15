@@ -1,6 +1,7 @@
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from time import perf_counter
 
 from app.api.routers import (
@@ -154,3 +155,6 @@ def documentacao_scalar():
       </body>
     </html>
     """)
+
+# Servir frontend pelo FastAPI: /static/analista/dashboard.html e /static/usuario/index.html
+app.mount("/static", StaticFiles(directory="frontend"), name="static")

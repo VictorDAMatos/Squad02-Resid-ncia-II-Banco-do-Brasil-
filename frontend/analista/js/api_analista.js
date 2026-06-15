@@ -19,6 +19,22 @@ function fmtN(valor) {
     return new Intl.NumberFormat('pt-BR').format(Math.round(Number(valor || 0)));
 }
 
+function nomeGrupo(item, campoOriginal) {
+    return item?.[campoOriginal] ?? item?.nome ?? '—';
+}
+
+async function fetchAnalista(path, options = {}) {
+    const headers = {
+        ...obterCabecalhosAnalista(),
+        ...(options.headers || {}),
+    };
+
+    return fetch(`${API_BASE_URL}${path}`, {
+        ...options,
+        headers,
+    });
+}
+
 function obterAnalista() {
     let id = localStorage.getItem('analistaId');
     let nome = localStorage.getItem('analistaNome');
@@ -170,10 +186,9 @@ async function carregarDados() {
     if (kpiGrid) kpiGrid.innerHTML = '<div class="loading-overlay" style="grid-column:1/-1"><div class="spinner"></div><span>Carregando painel…</span></div>';
 
     try {
-        const cabecalhos = obterCabecalhosAnalista();
         const [resumoRes, anomaliasRes] = await Promise.all([
-            fetch(`${API_BASE_URL}/analista/resumo`, { headers: cabecalhos }),
-            fetch(`${API_BASE_URL}/analista/anomalias-detalhadas`, { headers: cabecalhos }),
+            fetchAnalista('/analista/resumo'),
+            fetchAnalista('/analista/anomalias-detalhadas'),
         ]);
 
         if (!resumoRes.ok) throw new Error(`Endpoint /analista/resumo retornou ${resumoRes.status}`);
@@ -191,7 +206,7 @@ async function carregarDados() {
         criarGrafico(
             'chart-categoria',
             'doughnut',
-            (dados.por_categoria || []).map(item => item.categoria),
+            (dados.por_categoria || []).map(item => nomeGrupo(item, 'categoria')),
             (dados.por_categoria || []).map(item => item.volume),
             { currency: true, legend: true }
         );
@@ -199,7 +214,7 @@ async function carregarDados() {
         criarGrafico(
             'chart-dispositivo',
             'doughnut',
-            (dados.por_dispositivo || []).map(item => item.dispositivo),
+            (dados.por_dispositivo || []).map(item => nomeGrupo(item, 'dispositivo')),
             (dados.por_dispositivo || []).map(item => item.qtd),
             { legend: true }
         );
@@ -207,7 +222,7 @@ async function carregarDados() {
         criarGrafico(
             'chart-cidade',
             'bar',
-            (dados.por_cidade || []).map(item => item.cidade),
+            (dados.por_cidade || []).map(item => nomeGrupo(item, 'cidade')),
             (dados.por_cidade || []).map(item => item.volume),
             { currency: true, legend: false }
         );
@@ -215,7 +230,7 @@ async function carregarDados() {
         criarGrafico(
             'chart-tipo',
             'bar',
-            (dados.por_tipo || []).map(item => item.tipo_transacao),
+            (dados.por_tipo || []).map(item => nomeGrupo(item, 'tipo_transacao')),
             (dados.por_tipo || []).map(item => item.volume),
             { currency: true, legend: false }
         );
@@ -248,9 +263,7 @@ async function carregarCategorias() {
     if (!select) return;
 
     try {
-        const resposta = await fetch(`${API_BASE_URL}/analista/categorias`, {
-            headers: obterCabecalhosAnalista(),
-        });
+        const resposta = await fetchAnalista('/analista/categorias');
         if (!resposta.ok) return;
 
         const dados = await resposta.json();
@@ -284,9 +297,7 @@ async function aplicarFiltros() {
     if (aviso) aviso.innerHTML = '';
 
     try {
-        const resposta = await fetch(`${API_BASE_URL}/analista/transacoes-filtradas?${params.toString()}`, {
-            headers: obterCabecalhosAnalista(),
-        });
+        const resposta = await fetchAnalista(`/analista/transacoes-filtradas?${params.toString()}`);
 
         if (!resposta.ok) throw new Error(`Endpoint /analista/transacoes-filtradas retornou ${resposta.status}`);
 
@@ -404,9 +415,7 @@ function limparFiltros() {
 
 async function buscarAnomalias() {
     try {
-        const resposta = await fetch(`${API_BASE_URL}/analista/anomalias-detalhadas`, {
-            headers: obterCabecalhosAnalista(),
-        });
+        const resposta = await fetchAnalista('/analista/anomalias-detalhadas');
         if (!resposta.ok) throw new Error(`Status ${resposta.status}`);
         const anomalias = await resposta.json();
         renderAnomalias(anomalias);
@@ -419,9 +428,7 @@ async function buscarAnomalias() {
 
 async function buscarLogs() {
     try {
-        const resposta = await fetch(`${API_BASE_URL}/registros/logs?limite=20`, {
-            headers: obterCabecalhosAnalista(),
-        });
+        const resposta = await fetchAnalista('/registros/logs?limite=20');
         const dados = await resposta.json();
         const painel = document.getElementById('painel-logs');
         if (!painel) return;
@@ -454,9 +461,7 @@ async function buscarLogs() {
 
 async function buscarAuditoria() {
     try {
-        const resposta = await fetch(`${API_BASE_URL}/registros/auditoria?limite=20`, {
-            headers: obterCabecalhosAnalista(),
-        });
+        const resposta = await fetchAnalista('/registros/auditoria?limite=20');
         const dados = await resposta.json();
         const painel = document.getElementById('painel-auditoria');
         if (!painel) return;

@@ -10,7 +10,8 @@ from typing import Any, Generator, Iterable
 import sqlite3
 
 
-DB_PATH = Path("data/banco_brasil_transacoes.sqlite")
+BASE_DIR = Path(__file__).resolve().parents[2]
+DB_PATH = BASE_DIR / "data" / "banco_brasil_transacoes.sqlite"
 
 
 class AnalistaRepository:
