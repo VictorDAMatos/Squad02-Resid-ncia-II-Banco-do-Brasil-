@@ -2,25 +2,42 @@ from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
 from time import perf_counter
-from app.api.routers import clientes, transacoes, inteligencia, analista, core_bancario, anomalies, registros, risco, status, historico, antibot, monitoramento, seguranca
-from app.services.registro_service import inicializar_tabelas_registro, registrar_auditoria, registrar_log_operacao
-from app.core.security import configurar_camadas_de_seguranca
 
-# CONFIGURAÇÃO DE METADADOS
+from app.api.routers import (
+    clientes,
+    transacoes,
+    ia,
+    analista,
+    core_bancario,
+    registros,
+    risco,
+    status,
+    historico,
+    antibot,
+    monitoramento
+)
+
+from app.services.fraude_service import inicializar_tabelas_fraude
+from app.services.registro_service import (
+    inicializar_tabelas_registro,
+    registrar_auditoria,
+    registrar_log_operacao
+)
+
 descricao_api = """
 ### API Banco do Brasil - Squad 02 🚀
-Sistema modular de Core Bancário e Detecção de Fraudes com IA.
+Sistema modular de Core Bancário, Detecção de Fraudes,
+Auditoria e IA com Isolation Forest.
 """
 
 app = FastAPI(
     title="API Banco do Brasil",
     description=descricao_api,
-    version="2.0.0"
+    version="2.1.0"
 )
-
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Permite que qualquer página HTML acesse a API
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -42,14 +59,14 @@ def _nome_acao(metodo: str) -> str:
 
 
 @app.on_event("startup")
-def preparar_registros():
+def preparar_banco_e_registros():
     inicializar_tabelas_registro()
+    inicializar_tabelas_fraude()
 
 
 @app.middleware("http")
 async def middleware_logs_e_auditoria(request: Request, call_next):
     inicio = perf_counter()
-    resposta = None
     status_code = 500
 
     try:
@@ -93,17 +110,16 @@ async def middleware_logs_e_auditoria(request: Request, call_next):
                     detalhe=f"{acao} {rota}",
                 )
         except Exception:
-            # O registro de log/auditoria não deve derrubar a operação principal da API.
+            # Logs e auditoria não podem derrubar a operação principal.
             pass
+
 
 # CONEXÃO DOS ROUTERS
 app.include_router(clientes.router)
 app.include_router(transacoes.router)
-app.include_router(inteligencia.router)
+app.include_router(ia.router)
 app.include_router(analista.router)
 app.include_router(core_bancario.router)
-app.include_router(transacoes.router)
-app.include_router(anomalies.router)
 app.include_router(registros.router)
 app.include_router(risco.router)
 app.include_router(status.router)
@@ -112,16 +128,16 @@ app.include_router(antibot.router)
 app.include_router(monitoramento.router)
 app.include_router(seguranca.router)
 
-# ROTA RAIZ
+
 @app.get("/", tags=["Status"])
 def root():
     return {
         "status": "Online",
-        "versao": "2.0.0",
-        "projeto": "Modular Architecture (Layered)"
+        "versao": "2.1.0",
+        "projeto": "Modular Architecture + IA Isolation Forest integrada"
     }
 
-# SCALAR
+
 @app.get("/scalar", include_in_schema=False)
 def documentacao_scalar():
     return HTMLResponse(content="""
