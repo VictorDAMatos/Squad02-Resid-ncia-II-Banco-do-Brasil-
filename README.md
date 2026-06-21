@@ -230,6 +230,10 @@ Executar a aplicação:
 python -m uvicorn app.main:app --reload
 ```
 
+```
+python scripts\simulador_realtime.py
+```
+
 ---
 
 ## Documentação da API
