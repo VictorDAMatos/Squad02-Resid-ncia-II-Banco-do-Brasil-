@@ -206,6 +206,10 @@ Criar ambiente virtual:
 python -m venv .venv
 ```
 
+```
+pip install uvicorn
+```
+
 Ativar ambiente virtual:
 
 Windows:
