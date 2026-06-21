@@ -152,3 +152,42 @@ def configurar_camadas_de_seguranca(app) -> None:
     """Registra as camadas globais de seguranca da API."""
     app.add_middleware(HeadersSegurancaMiddleware)
     app.add_middleware(ProtecaoRequisicaoMiddleware)
+
+import os
+import secrets
+from fastapi import Header, HTTPException, status
+
+
+DEFAULT_DEV_TOKEN = "analista-dev-token"
+
+
+def verificar_analista(x_analista_token: str | None = Header(default=None)):
+    """
+    Verifica se a requisição possui token de analista.
+
+    Em ambiente de desenvolvimento, é possível desativar essa checagem
+    usando a variável de ambiente:
+    ANALISTA_AUTH_DISABLED=true
+    """
+
+    auth_desativada = os.getenv("ANALISTA_AUTH_DISABLED", "false").strip().lower()
+
+    if auth_desativada in {"1", "true", "sim", "yes", "on"}:
+        return {
+            "perfil": "analista",
+            "autenticado": False,
+            "modo": "auth_desativada"
+        }
+
+    token_esperado = os.getenv("ANALISTA_API_TOKEN", DEFAULT_DEV_TOKEN)
+
+    if not x_analista_token or not secrets.compare_digest(x_analista_token, token_esperado):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Acesso exclusivo do analista. Envie um X-Analista-Token válido.",
+        )
+
+    return {
+        "perfil": "analista",
+        "autenticado": True
+    }
