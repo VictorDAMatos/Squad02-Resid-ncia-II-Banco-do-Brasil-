@@ -3,6 +3,8 @@ from fastapi.responses import HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from time import perf_counter
+from app.core.security import configurar_camadas_de_seguranca
+
 
 from app.api.routers import (
     clientes,
@@ -15,7 +17,9 @@ from app.api.routers import (
     status,
     historico,
     antibot,
-    monitoramento
+    monitoramento,
+    seguranca,
+    usuario
 )
 
 from app.services.fraude_service import inicializar_tabelas_fraude
@@ -128,6 +132,7 @@ app.include_router(historico.router)
 app.include_router(antibot.router)
 app.include_router(monitoramento.router)
 app.include_router(seguranca.router)
+app.include_router(usuario.router)
 
 
 @app.get("/", tags=["Status"])

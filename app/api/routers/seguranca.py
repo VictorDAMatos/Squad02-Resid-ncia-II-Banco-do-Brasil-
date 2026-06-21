@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException, Query
 
 from app.core.security import contem_padrao_suspeito, mascarar_dados_sensiveis
 
-router = APIRouter(prefix="/seguranca", tags=["🔒 Segurança (RNF 6.3)"])
+router = APIRouter(prefix="/seguranca", tags=["🔒 Segurança"])
 
 
 @router.get("/status")
