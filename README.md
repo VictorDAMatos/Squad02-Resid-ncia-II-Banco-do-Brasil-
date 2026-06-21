@@ -217,7 +217,7 @@ Windows:
 Instalar dependências:
 
 ```
-pip install -r requirements.txt
+pip install fastapi uvicorn sqlalchemy pydantic requests pandas numpy scikit-learn joblib python-multipart
 ```
 
 Executar a aplicação:
