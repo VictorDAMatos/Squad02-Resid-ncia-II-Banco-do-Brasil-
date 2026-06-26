@@ -1,244 +1,232 @@
+"""Rotas da área do analista.
+
+Router = camada de entrada HTTP.
+Aqui ficam apenas endpoints, validação de parâmetros e chamada para o service.
+"""
+
 from typing import Optional
 
-from fastapi import APIRouter, Query
-import sqlite3
+from fastapi import APIRouter, Depends, Query
 
-router = APIRouter(prefix="/analista", tags=["Painel do Analista (US04)"])
-
-DB_PATH = "data/banco_brasil_transacoes.sqlite"
-
-
-# ── ENDPOINTS ORIGINAIS (US04) ──────────────────────────────────────────────
-
-@router.get("/contas-bloqueadas")
-def listar_bloqueios():
-    # Lista de contas suspensas por risco 3
-    return {"bloqueadas": []}
-
-
-@router.post("/desbloquear/{conta_id}")
-def desbloquear_conta(conta_id: int):
-    # Função para o analista reativar conta.
-    return {"mensagem": f"Conta {conta_id} desbloqueada manualmente."}
-
-
-# ── HELPERS ────────────────────────────────────────────────────────────────
-
-def conectar_banco():
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
-    return conn
+from app.core.security import verificar_analista
+from app.schemas.analista_schema import (
+    CategoriasResponse,
+    ContasBloqueadasResponse,
+    DesbloqueioRequest,
+    DetalheTransacaoResponse,
+    FluxoConfirmacaoResponse,
+    InjecaoSaldoRequest,
+    MensagemResponse,
+    NotificacaoRequest,
+    NotificacoesResponse,
+    ResolverAnaliseRequest,
+    ResumoAnalistaResponse,
+    SLAResponse,
+    TimelineSuspeitoResponse,
+    TransacoesFiltradasResponse,
+)
+from app.services.analista_service import AnalistaService
 
 
-def colunas_transactions(conn) -> set[str]:
-    cursor = conn.cursor()
-    cursor.execute("PRAGMA table_info(transactions)")
-    return {linha[1] for linha in cursor.fetchall()}
+router = APIRouter(
+    prefix="/analista",
+    tags=["🛡️ Painel do Analista"],
+    dependencies=[Depends(verificar_analista)],
+)
+service = AnalistaService()
 
 
-# ── DASHBOARD DO ANALISTA (3.1) ─────────────────────────────────────────────
-
-@router.get("/resumo")
+@router.get(
+    "/resumo",
+    response_model=ResumoAnalistaResponse,
+    summary="Resumo de Movimentações"
+)
 def resumo_movimentacoes():
-    """Retorna um resumo completo das movimentações para o painel do analista."""
-    conn = conectar_banco()
-    cursor = conn.cursor()
-
-    cursor.execute(
-        """
-        SELECT
-            COUNT(*) AS total,
-            COALESCE(SUM(valor), 0) AS volume,
-            COALESCE(AVG(valor), 0) AS media,
-            COALESCE(MAX(valor), 0) AS maior
-        FROM transactions
-        """
-    )
-    kpis = dict(cursor.fetchone())
-
-    cursor.execute(
-        """
-        SELECT COUNT(*) AS total_anomalias
-        FROM transactions
-        WHERE valor > 5000 OR hora BETWEEN '00:00' AND '05:59'
-        """
-    )
-    kpis["total_anomalias"] = cursor.fetchone()["total_anomalias"]
-
-    cursor.execute(
-        """
-        SELECT categoria, COUNT(*) AS qtd, COALESCE(SUM(valor), 0) AS volume
-        FROM transactions
-        GROUP BY categoria
-        ORDER BY volume DESC
-        """
-    )
-    por_categoria = [dict(row) for row in cursor.fetchall()]
-
-    cursor.execute(
-        """
-        SELECT cidade, COUNT(*) AS qtd, COALESCE(SUM(valor), 0) AS volume
-        FROM transactions
-        GROUP BY cidade
-        ORDER BY volume DESC
-        LIMIT 10
-        """
-    )
-    por_cidade = [dict(row) for row in cursor.fetchall()]
-
-    cursor.execute(
-        """
-        SELECT dispositivo, COUNT(*) AS qtd
-        FROM transactions
-        GROUP BY dispositivo
-        ORDER BY qtd DESC
-        """
-    )
-    por_dispositivo = [dict(row) for row in cursor.fetchall()]
-
-    cursor.execute(
-        """
-        SELECT tipo_transacao, COUNT(*) AS qtd, COALESCE(SUM(valor), 0) AS volume
-        FROM transactions
-        GROUP BY tipo_transacao
-        ORDER BY volume DESC
-        """
-    )
-    por_tipo = [dict(row) for row in cursor.fetchall()]
-
-    cursor.execute(
-        """
-        SELECT SUBSTR(hora, 1, 2) AS hora_dia, COUNT(*) AS qtd, COALESCE(SUM(valor), 0) AS volume
-        FROM transactions
-        GROUP BY hora_dia
-        ORDER BY hora_dia
-        """
-    )
-    por_hora = [dict(row) for row in cursor.fetchall()]
-
-    cursor.execute("SELECT * FROM transactions ORDER BY id DESC LIMIT 10")
-    ultimas_transacoes = [dict(row) for row in cursor.fetchall()]
-
-    conn.close()
-
-    return {
-        "kpis": kpis,
-        "por_categoria": por_categoria,
-        "por_cidade": por_cidade,
-        "por_dispositivo": por_dispositivo,
-        "por_tipo": por_tipo,
-        "por_hora": por_hora,
-        "ultimas_transacoes": ultimas_transacoes,
-    }
+    """Retorna KPIs e agrupamentos para o dashboard do analista."""
+    return service.obter_resumo()
 
 
-@router.get("/anomalias-detalhadas")
-def anomalias_detalhadas():
-    """Lista as anomalias com a regra que as identificou."""
-    conn = conectar_banco()
-    cursor = conn.cursor()
-    cursor.execute(
-        """
-        SELECT *,
-            CASE
-                WHEN valor > 10000 THEN 'Valor Muito Alto (>R$10.000)'
-                WHEN hora BETWEEN '00:00' AND '05:59' THEN 'Horário Suspeito (Madrugada)'
-                WHEN dispositivo = 'caixa_eletronico' AND valor > 5000 THEN 'Saque Alto em Caixa Eletrônico'
-                ELSE 'Valor Alto (>R$5.000)'
-            END AS regra_alerta
-        FROM transactions
-        WHERE valor > 5000 OR hora BETWEEN '00:00' AND '05:59'
-        ORDER BY valor DESC
-        LIMIT 50
-        """
-    )
-    rows = [dict(row) for row in cursor.fetchall()]
-    conn.close()
-    return rows
+@router.post(
+    "/transacoes/{transacao_id}/processar-fluxo",
+    response_model=FluxoConfirmacaoResponse,
+    summary="Processar Fluxo de Confirmação"
+)
+def processar_fluxo_confirmacao(transacao_id: int):
+    """4.1 + 4.3: percorre o fluxo de confirmação e aplica a ação automática pelo risco."""
+    return service.processar_fluxo_confirmacao(transacao_id)
 
 
-# ── FILTROS AVANÇADOS DO DASHBOARD (3.5) ───────────────────────────────────
+@router.get(
+    "/anomalias-detalhadas",
+    summary="Anomalias Detalhadas"
+)
+def anomalias_detalhadas(
+    limite: int = Query(50, ge=1, le=500, description="Quantidade máxima de anomalias."),
+):
+    """Lista anomalias com a regra de risco que identificou cada transação."""
+    return service.listar_anomalias_detalhadas(limite=limite)
 
-@router.get("/categorias")
+
+@router.get(
+    "/categorias",
+    response_model=CategoriasResponse,
+    summary="Listar Categorias"
+)
 def listar_categorias():
-    """Retorna as categorias disponíveis para preencher o filtro do dashboard."""
-    conn = conectar_banco()
-    cursor = conn.cursor()
-    cursor.execute("SELECT DISTINCT categoria FROM transactions ORDER BY categoria")
-    categorias = [row["categoria"] for row in cursor.fetchall()]
-    conn.close()
-    return {"categorias": categorias}
+    """Retorna categorias disponíveis para preencher filtros no frontend."""
+    return service.listar_categorias()
 
 
-@router.get("/transacoes-filtradas")
+@router.get(
+    "/transacoes-filtradas",
+    response_model=TransacoesFiltradasResponse,
+    summary="Transações Filtradas"
+)
 def transacoes_filtradas(
-    cpf: Optional[str] = Query(None, description="CPF do cliente. Se a base não tiver CPF, o filtro é aplicado na conta."),
+    cpf: Optional[str] = Query(None, description="CPF do cliente."),
     conta: Optional[str] = Query(None, description="Conta bancária."),
     categoria: Optional[str] = Query(None, description="Categoria da transação."),
     valor_min: Optional[float] = Query(None, ge=0, description="Valor mínimo da transação."),
     valor_max: Optional[float] = Query(None, ge=0, description="Valor máximo da transação."),
-    limite: int = Query(100, ge=1, le=500, description="Quantidade máxima de registros retornados."),
+    limite: int = Query(100, ge=1, le=500, description="Quantidade máxima de registros."),
 ):
     """Filtra transações por CPF/conta, categoria e faixa de valor."""
-    conn = conectar_banco()
-    cursor = conn.cursor()
-    colunas = colunas_transactions(conn)
-
-    filtros = []
-    parametros = []
-    avisos = []
-
-    if cpf:
-        if "cpf" in colunas:
-            filtros.append("cpf LIKE ?")
-            parametros.append(f"%{cpf}%")
-        elif "conta" in colunas:
-            filtros.append("conta LIKE ?")
-            parametros.append(f"%{cpf}%")
-            avisos.append("A base atual não possui coluna CPF; o filtro foi aplicado no campo conta.")
-        else:
-            avisos.append("A base atual não possui coluna CPF nem conta para aplicar esse filtro.")
-
-    if conta and "conta" in colunas:
-        filtros.append("conta LIKE ?")
-        parametros.append(f"%{conta}%")
-
-    if categoria:
-        filtros.append("LOWER(categoria) = LOWER(?)")
-        parametros.append(categoria)
-
-    if valor_min is not None:
-        filtros.append("valor >= ?")
-        parametros.append(valor_min)
-
-    if valor_max is not None:
-        filtros.append("valor <= ?")
-        parametros.append(valor_max)
-
-    where_sql = f"WHERE {' AND '.join(filtros)}" if filtros else ""
-
-    cursor.execute(f"SELECT COUNT(*) AS total FROM transactions {where_sql}", parametros)
-    total = cursor.fetchone()["total"]
-
-    cursor.execute(
-        f"""
-        SELECT *
-        FROM transactions
-        {where_sql}
-        ORDER BY id DESC
-        LIMIT ?
-        """,
-        [*parametros, limite],
+    return service.filtrar_transacoes(
+        cpf=cpf,
+        conta=conta,
+        categoria=categoria,
+        valor_min=valor_min,
+        valor_max=valor_max,
+        limite=limite,
     )
-    transacoes = [dict(row) for row in cursor.fetchall()]
-    conn.close()
-
-    return {
-        "total": total,
-        "limite": limite,
-        "transacoes": transacoes,
-        "avisos": avisos,
-    }
 
 
-# ROUTER (US04)
+@router.get(
+    "/transacoes-por-risco",
+    response_model=TransacoesFiltradasResponse,
+    summary="Transações por Risco"
+)
+def transacoes_por_risco(
+    risco: Optional[str] = Query(None, description="baixo, medio ou alto."),
+    limite: int = Query(100, ge=1, le=500, description="Quantidade máxima de registros."),
+):
+    """4.4: filtra transações pela gravidade do risco."""
+    return service.listar_transacoes_por_risco(risco=risco, limite=limite)
+
+
+@router.get(
+    "/transacoes/{transacao_id}",
+    response_model=DetalheTransacaoResponse,
+    summary="Visualizar Transação Manual"
+)
+def visualizar_transacao_manual(transacao_id: int):
+    """4.5 + 4.11: detalhe manual da transação, risco e perfil de dispositivo."""
+    return service.obter_detalhe_transacao(transacao_id)
+
+
+@router.get(
+    "/contas-bloqueadas",
+    response_model=ContasBloqueadasResponse,
+    summary="Listar Contas Bloqueadas"
+)
+def listar_bloqueios():
+    """4.6: lista contas/transações marcadas como bloqueadas ou suspensas."""
+    return service.listar_contas_bloqueadas()
+
+
+@router.post(
+    "/desbloquear/{conta_id}",
+    response_model=MensagemResponse,
+    summary="Desbloquear Conta"
+)
+def desbloquear_conta(conta_id: str, dados: DesbloqueioRequest):
+    """4.6 + 4.10: desbloqueia conta exigindo justificativa e registrando auditoria."""
+    return service.desbloquear_conta(
+        conta_id=conta_id,
+        justificativa=dados.justificativa,
+        analista=dados.analista,
+    )
+
+
+@router.get(
+    "/suspeitos/{suspeito}/timeline",
+    response_model=TimelineSuspeitoResponse,
+    summary="Linha do Tempo do Suspeito"
+)
+def timeline_suspeito(
+    suspeito: str,
+    limite: int = Query(100, ge=1, le=500, description="Quantidade máxima de registros."),
+):
+    """4.7: mostra resumo do suspeito, histórico, notificações, auditoria e dispositivos."""
+    return service.montar_timeline_suspeito(suspeito=suspeito, limite=limite)
+
+
+@router.post(
+    "/notificacoes",
+    response_model=MensagemResponse,
+    summary="Registrar Notificação"
+)
+def registrar_notificacao(dados: NotificacaoRequest):
+    """4.8: registra uma mensagem de aviso enviada ao suspeito."""
+    return service.registrar_notificacao(
+        suspeito=dados.suspeito,
+        mensagem=dados.mensagem,
+        canal=dados.canal,
+        transacao_id=dados.transacao_id,
+        analista=dados.analista,
+    )
+
+@router.get(
+    "/notificacoes",
+    response_model=NotificacoesResponse,
+    summary="Listar Notificações"
+)
+def listar_notificacoes(
+    suspeito: Optional[str] = Query(None, description="CPF/conta do suspeito."),
+    limite: int = Query(100, ge=1, le=500, description="Quantidade máxima de registros."),
+):
+    """4.8: lista logs de notificações, opcionalmente filtrados por suspeito."""
+    return service.listar_notificacoes(suspeito=suspeito, limite=limite)
+
+
+@router.post(
+    "/injetar-saldo",
+    response_model=MensagemResponse,
+    summary="Injetar Saldo"
+)
+def injetar_saldo(dados: InjecaoSaldoRequest):
+    """4.9: registra/injeta saldo de teste em uma conta. Rota protegida para analista."""
+    return service.injetar_saldo(
+        conta=dados.conta,
+        valor=dados.valor,
+        justificativa=dados.justificativa,
+        analista=dados.analista,
+    )
+
+
+@router.get(
+    "/sla",
+    response_model=SLAResponse,
+    summary="Painel de SLA"
+)
+def painel_sla(
+    somente_abertas: bool = Query(False, description="Quando true, lista apenas análises em aberto."),
+    limite: int = Query(100, ge=1, le=500, description="Quantidade máxima de registros."),
+):
+    """4.12: painel de tempo de resposta das análises."""
+    return service.listar_sla(somente_abertas=somente_abertas, limite=limite)
+
+
+@router.post(
+    "/sla/{transacao_id}/resolver",
+    response_model=MensagemResponse,
+    summary="Resolver Análise SLA"
+)
+def resolver_analise(transacao_id: int, dados: ResolverAnaliseRequest):
+    """4.12: conclui uma análise manual e calcula seu tempo total pelo SLA."""
+    return service.resolver_analise(
+        transacao_id=transacao_id,
+        status_final=dados.status_final,
+        justificativa=dados.justificativa,
+        analista=dados.analista,
+    )
