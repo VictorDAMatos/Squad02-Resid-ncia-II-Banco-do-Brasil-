@@ -273,53 +273,145 @@ app/
 
 ---
 
-# Endpoints Principais
+# Principais Rotas da API
 
-## Inteligência Artificial
+Abaixo estão listadas as principais rotas da API para execução, validação e demonstração do sistema. A documentação completa dos endpoints pode ser acessada automaticamente pelo Swagger em: `http://127.0.0.1:8000/docs`.
 
-```
-POST /ia/analisar
+> Observação: as rotas protegidas do analista exigem o header `x-analista-token`.
+>
+> Token padrão para testes acadêmicos:
+>
+> ```txt
+> x-analista-token: analista-dev-token
+> ```
+
+## Usuário
+
+```http
+GET /usuario/perfil
+GET /usuario/saldo
+GET /usuario/transacoes
+GET /usuario/extrato/exportar
 ```
 
-```
-POST /ia/analisar-anomalia
+Rotas relacionadas ao perfil do usuário, saldo, histórico de movimentações e exportação do extrato.
+
+---
+
+## Operações Bancárias do Usuário
+
+```http
+POST /usuario/transferencia
+POST /usuario/pix
+POST /usuario/deposito
+POST /usuario/boleto/gerar
+POST /usuario/boleto/pagar
+GET /usuario/boleto/listar
+POST /usuario/emprestimo/simular
+GET /usuario/emprestimo/listar
 ```
 
-```
-GET /ia/dashboard
-```
-
-```
-GET /ia/relatorio-fraudes
-```
+Rotas responsáveis pelas operações bancárias simuladas, como transferência, PIX, depósito, boleto e empréstimo.
 
 ---
 
 ## Transações
 
-```
-POST /transacoes
+```http
+POST /transacoes/
+GET /transacoes/
+GET /historico/transacoes
+GET /analista/transacoes/{transacao_id}
+GET /analista/transacoes-filtradas
+GET /analista/transacoes-por-risco
+POST /analista/transacoes/{transacao_id}/processar-fluxo
 ```
 
-```
-GET /transacoes
-```
-
----
-
-## Monitoramento
-
-```
-GET /monitoramento
-```
+Rotas utilizadas para registrar, listar, consultar detalhes, filtrar e processar transações no fluxo do analista.
 
 ---
 
-## Dashboard do Analista
+## Classificação, Monitoramento e Anti-Bot
 
+```http
+GET /classificacao/risco
+POST /monitoramento/vigiar
+GET /antibot/verificar
 ```
-GET /analista/dashboard
+
+Rotas relacionadas à classificação de risco, monitoramento em tempo real e verificação de comportamento de velocidade/transações repetidas.
+
+> A rota antiga `GET /monitoramento` não é o endpoint principal utilizado nesta versão. Para validação do monitoramento, utilize `POST /monitoramento/vigiar`.
+
+---
+
+## Inteligência Artificial
+
+```http
+POST /ia/analisar
+POST /ia/analisar-anomalia
+GET /ia/dashboard
+GET /ia/relatorio-fraudes
+GET /ia/anomalies
 ```
+
+Rotas utilizadas para análise de anomalias, consulta de indicadores da IA, dashboard e relatórios relacionados à detecção de fraude.
+
+---
+
+## Analista
+
+As rotas abaixo exigem o header:
+
+```txt
+x-analista-token: analista-dev-token
+```
+
+```http
+GET /analista/resumo
+GET /analista/anomalias-detalhadas
+GET /analista/categorias
+GET /analista/contas-bloqueadas
+POST /analista/desbloquear/{conta_id}
+POST /analista/injetar-saldo
+GET /analista/suspeitos/{suspeito}/timeline
+```
+
+Rotas do painel do analista para resumo operacional, investigação de anomalias, contas bloqueadas, desbloqueio, injeção de saldo de teste e linha do tempo do suspeito.
+
+---
+
+## Notificações
+
+```http
+GET /analista/notificacoes
+POST /analista/notificacoes
+```
+
+Rotas responsáveis pelo registro e consulta de notificações relacionadas a usuários ou transações suspeitas.
+
+---
+
+## SLA
+
+```http
+GET /analista/sla
+POST /analista/sla/{transacao_id}/resolver
+```
+
+Rotas responsáveis por acompanhar o tempo de resposta das análises manuais e registrar a resolução feita pelo analista.
+
+---
+
+## Relatórios, Logs e Auditoria
+
+```http
+GET /registros/logs
+GET /registros/auditoria
+GET /ia/relatorio-fraudes
+```
+
+Rotas voltadas para rastreabilidade, registro de operações, auditoria e relatórios de fraude.
 
 ---
 
@@ -353,47 +445,158 @@ GET /analista/dashboard
 
 # Instalação
 
-## Criar ambiente virtual
+## 1. Entrar na pasta raiz do projeto
 
+Antes de executar a API, o terminal precisa estar na pasta onde aparecem as pastas `app`, `frontend`, `database` e o arquivo `README.md`.
+
+Exemplo no Windows:
+
+```powershell
+cd "C:\Users\Pedro\Downloads\Squad02_corrigido_saldo_sla_FINAL3\Squad02-Resid-ncia-II-Banco-do-Brasil--main"
 ```
+
+Para conferir se está na pasta correta:
+
+```powershell
+dir
+```
+
+A saída deve mostrar algo parecido com:
+
+```txt
+app
+frontend
+database
+README.md
+```
+
+> Não execute o projeto usando `python app/main.py`. O correto é iniciar pelo Uvicorn, pois o projeto usa imports internos a partir do pacote `app`.
+
+---
+
+## 2. Criar ambiente virtual
+
+```powershell
 python -m venv .venv
 ```
 
-## Ativar ambiente virtual
+---
+
+## 3. Ativar ambiente virtual
 
 ### Windows
 
-```
+```powershell
 .venv\Scripts\activate
 ```
 
-### Linux
+### Linux/Mac
 
-```
+```bash
 source .venv/bin/activate
 ```
 
-## Instalar dependências
+---
 
+## 4. Instalar dependências
+
+```powershell
+pip install fastapi uvicorn pandas numpy scikit-learn joblib pydantic requests python-multipart
 ```
-pip install fastapi uvicorn sqlalchemy pydantic requests pandas numpy scikit-learn joblib python-multipart
-```
+
+Caso o projeto seja executado em uma máquina limpa, instale as dependências antes de subir o servidor.
 
 ---
 
 # Execução
 
-Executar API:
+## Comando padrão
 
-```
+```powershell
 python -m uvicorn app.main:app --reload
 ```
 
-Executar simulador de transações:
+Esse comando é válido para desenvolvimento, pois reinicia a API automaticamente quando algum arquivo é alterado.
 
+## Comando alternativo para Windows/Python 3.14
+
+Em algumas máquinas Windows, principalmente usando Python 3.14, o `--reload` pode gerar erro de multiprocessing. Nesse caso, execute sem `--reload`:
+
+```powershell
+python -m uvicorn app.main:app --host 127.0.0.1 --port 8000
 ```
+
+Depois de subir a API, acesse:
+
+```txt
+http://127.0.0.1:8000/docs
+```
+
+---
+
+## Executar simulador de transações
+
+Com a API rodando, abra outro terminal na pasta raiz do projeto e execute:
+
+```powershell
 python scripts\simulador_realtime.py
 ```
+
+O simulador envia transações para a rota `POST /transacoes/` usando a mesma base SQLite da API: `data/banco_brasil_transacoes.sqlite`.
+
+---
+
+# Scripts Auxiliares
+
+Os scripts auxiliares ficam na pasta `scripts/` e devem ser executados a partir da pasta raiz do projeto, onde aparecem as pastas `app`, `frontend`, `database`, `data` e o arquivo `README.md`.
+
+## Popular banco de dados
+
+```powershell
+python scripts\popular_banco.py
+```
+
+Esse script popula a base SQLite com dados de teste. Ele utiliza o banco `data/banco_brasil_transacoes.sqlite`, o mesmo utilizado pela API.
+
+## Simulador em tempo real
+
+```powershell
+python scripts\simulador_realtime.py
+```
+
+Esse script simula o envio contínuo de transações para a API. Para funcionar corretamente, a API precisa estar rodando em `http://127.0.0.1:8000`.
+
+---
+
+# Validação da Inteligência Artificial
+
+A inferência da IA pode ser validada pelo script interno de teste:
+
+```powershell
+python -m app.ai.inference.test_predictor
+```
+
+Esse comando testa o carregamento do modelo Isolation Forest, dos encoders e do scaler, retornando a classificação de anomalia, score, risco e motivo.
+
+Também é possível validar a IA pelas rotas disponíveis no Swagger:
+
+```http
+POST /ia/analisar
+POST /ia/analisar-anomalia
+GET /ia/dashboard
+GET /ia/relatorio-fraudes
+GET /ia/anomalies
+```
+
+---
+
+# Observações de Teste
+
+- A base SQLite pode conter dados de teste usados na validação do projeto.
+- Os scripts auxiliares usam a mesma base da API: `data/banco_brasil_transacoes.sqlite`.
+- O token `analista-dev-token` é utilizado apenas para demonstração acadêmica.
+- O login visual do frontend é demonstrativo; as rotas protegidas do analista usam validação por header.
+- O comando com `--reload` pode falhar em algumas instalações Windows/Python 3.14. Nesse caso, use o comando alternativo sem reload.
 
 ---
 

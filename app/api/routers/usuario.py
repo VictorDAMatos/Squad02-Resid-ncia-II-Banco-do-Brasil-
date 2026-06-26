@@ -65,9 +65,34 @@ def _saldo_calculado() -> float:
             (CONTA_PADRAO,),
         ).fetchone()
 
+        # A injeção de saldo do analista é registrada em saldo_injecoes.
+        # Antes, o endpoint /usuario/saldo ignorava essa tabela e por isso
+        # o POST /analista/injetar-saldo retornava 200 OK, mas o saldo visual
+        # continuava igual. Somamos essas injeções como créditos de teste.
+        tabela_injecoes = conn.execute(
+            """
+            SELECT name
+            FROM sqlite_master
+            WHERE type = 'table' AND name = 'saldo_injecoes'
+            """
+        ).fetchone()
+
+        if tabela_injecoes:
+            row_inj = conn.execute(
+                """
+                SELECT COALESCE(SUM(valor), 0) AS total
+                FROM saldo_injecoes
+                WHERE conta = ?
+                """,
+                (CONTA_PADRAO,),
+            ).fetchone()
+        else:
+            row_inj = None
+
     debitos  = row_deb["total"]  if row_deb  else 0.0
     creditos = row_cred["total"] if row_cred else 0.0
-    return round(SALDO_INICIAL + creditos - debitos, 2)
+    injecoes = row_inj["total"]  if row_inj  else 0.0
+    return round(SALDO_INICIAL + creditos + injecoes - debitos, 2)
 
 
 def _gerar_protocolo() -> str:

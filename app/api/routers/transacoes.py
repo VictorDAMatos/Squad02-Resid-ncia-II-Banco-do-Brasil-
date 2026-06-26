@@ -15,6 +15,7 @@ from app.services.fraude_service import (
     marcar_conta_bloqueada,
     processar_transacao,
     registrar_notificacao,
+    iniciar_sla_transacao,
 )
 from app.services.ia_service import analisar_transacao_ia, aplicar_resultado_ia_na_transacao
 
@@ -100,6 +101,23 @@ def criar_transacao(transacao: Transacao):
             resultado_ia,
             conta=transacao.conta,
         )
+
+        # O SLA precisa considerar a decisão final depois da IA.
+        # Antes, o SLA só era criado pelo motor determinístico; quando o motor dava verde
+        # mas a IA elevava para amarelo/EM_ANALISE, o painel continuava vazio.
+        classificacao_final = str(decisao_ia.get("classificacao_final") or "").lower()
+        status_final = str(decisao_ia.get("status_transacao_final") or "").lower()
+        status_ia = str(decisao_ia.get("status_ia") or "").upper()
+        if (
+            classificacao_final in {"amarelo", "vermelho"}
+            or status_final in {"pendente", "em análise", "em_analise"}
+            or status_ia == "EM_ANALISE"
+        ):
+            iniciar_sla_transacao(
+                conexao,
+                transacao_id,
+                "alto" if classificacao_final == "vermelho" else "medio",
+            )
 
         if decisao_ia["bloqueio_por_ia"]:
             marcar_conta_bloqueada(

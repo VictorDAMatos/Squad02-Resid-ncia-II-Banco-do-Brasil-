@@ -76,6 +76,21 @@ class AnalistaRepository:
             cursor.execute(f"PRAGMA table_info({tabela})")
             return {linha[1] for linha in cursor.fetchall()}
 
+    def garantir_colunas(self, tabela: str, colunas: dict[str, str]) -> None:
+        """Adiciona colunas que faltam em tabelas já existentes.
+
+        O projeto já vinha com bancos SQLite prontos. Quando o CREATE TABLE IF NOT EXISTS
+        encontra uma tabela antiga, ele não altera a estrutura dela automaticamente. Essa
+        migração simples evita erros como inserir em uma coluna que ainda não existe.
+        """
+        existentes = self.listar_colunas(tabela)
+        with self.conectar() as conn:
+            cursor = conn.cursor()
+            for coluna, definicao in colunas.items():
+                if coluna not in existentes:
+                    cursor.execute(f"ALTER TABLE {tabela} ADD COLUMN {coluna} {definicao}")
+            conn.commit()
+
     def _coluna_id(self) -> str:
         """Usa id quando existir; caso contrário, usa o rowid interno do SQLite."""
         return "id" if "id" in self.listar_colunas() else "rowid"
@@ -164,6 +179,17 @@ class AnalistaRepository:
                     criado_em DATETIME DEFAULT CURRENT_TIMESTAMP
                 )
                 """
+            )
+            # Migração para bancos antigos do projeto: algumas versões usavam
+            # data_hora/aplicado_na_tabela_conta, outras usavam criado_em.
+            # Mantemos as duas formas para a rota de injeção de saldo não quebrar.
+            self.garantir_colunas(
+                "saldo_injecoes",
+                {
+                    "data_hora": "TEXT",
+                    "criado_em": "DATETIME",
+                    "aplicado_na_tabela_conta": "INTEGER NOT NULL DEFAULT 0",
+                },
             )
             cursor.execute(
                 """
@@ -390,7 +416,12 @@ class AnalistaRepository:
             return self._rows_para_dict(cursor.fetchall())
 
     def desbloquear_conta(self, conta_id: str) -> int:
-        """Ativa uma conta bloqueada por id, conta ou conta_id."""
+        """Desbloqueia a conta no estado usado pelo painel e pela criação de transações.
+
+        Correção importante: além de registrar auditoria, o desbloqueio precisa limpar
+        a tabela contas_bloqueadas e atualizar o status_conta das transações da conta.
+        A rota /transacoes/ consulta esse estado antes de permitir novas operações.
+        """
         colunas = self.listar_colunas()
         filtros: list[str] = []
         parametros: list[Any] = []
@@ -406,17 +437,58 @@ class AnalistaRepository:
 
         with self.conectar() as conn:
             cursor = conn.cursor()
+
+            # 1) Libera a tabela específica de bloqueios, quando ela existir.
+            cursor.execute(
+                """
+                CREATE TABLE IF NOT EXISTS contas_bloqueadas (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    conta TEXT UNIQUE,
+                    titular TEXT,
+                    motivo TEXT,
+                    transacao_id INTEGER,
+                    data_hora TEXT,
+                    analista TEXT,
+                    status TEXT DEFAULT 'Bloqueada'
+                )
+                """
+            )
+            cursor.execute(
+                """
+                UPDATE contas_bloqueadas
+                SET status = 'Desbloqueada'
+                WHERE CAST(conta AS TEXT) = ?
+                """,
+                (str(conta_id),),
+            )
+            linhas_bloqueios = cursor.rowcount
+
+            # 2) Libera o status interno que /transacoes/ verifica.
+            # Não filtramos por status antigo, porque bancos de teste podem ter variações
+            # de caixa, espaços ou valores legados.
             cursor.execute(
                 f"""
                 UPDATE transactions
-                SET status_conta = 'Ativa'
-                WHERE ({' OR '.join(filtros)})
-                  AND LOWER(COALESCE(status_conta, '')) IN ('bloqueada', 'suspensa', 'bloqueado', 'suspenso')
+                SET
+                    status_conta = 'Ativa',
+                    status_transacao = CASE
+                        WHEN LOWER(COALESCE(status_transacao, '')) IN ('pendente', 'em análise', 'em_analise', 'em analise')
+                        THEN 'revisada'
+                        ELSE status_transacao
+                    END,
+                    status = CASE
+                        WHEN LOWER(COALESCE(status, '')) IN ('pendente', 'em análise', 'em_analise', 'em analise')
+                        THEN 'revisada'
+                        ELSE status
+                    END
+                WHERE {' OR '.join(filtros)}
                 """,
                 parametros,
             )
+            linhas_transacoes = cursor.rowcount
+
             conn.commit()
-            return cursor.rowcount
+            return linhas_bloqueios + linhas_transacoes
 
     def atualizar_fluxo_transacao(self, transacao_id: int, status_transacao: str, status_conta: str | None = None) -> dict[str, Any]:
         id_col = self._coluna_id()
@@ -604,15 +676,39 @@ class AnalistaRepository:
         }
 
     def registrar_injecao_saldo(self, conta: str, valor: float, justificativa: str, analista: str) -> int:
+        self.garantir_colunas(
+            "saldo_injecoes",
+            {
+                "data_hora": "TEXT",
+                "criado_em": "DATETIME",
+                "aplicado_na_tabela_conta": "INTEGER NOT NULL DEFAULT 0",
+            },
+        )
+        colunas = self.listar_colunas("saldo_injecoes")
+
+        campos = ["conta", "valor", "justificativa", "analista"]
+        valores_sql = ["?", "?", "?", "?"]
+        parametros: list[Any] = [conta, valor, justificativa, analista]
+
+        if "data_hora" in colunas:
+            campos.append("data_hora")
+            valores_sql.append("datetime('now', 'localtime')")
+        if "criado_em" in colunas:
+            campos.append("criado_em")
+            valores_sql.append("CURRENT_TIMESTAMP")
+        if "aplicado_na_tabela_conta" in colunas:
+            campos.append("aplicado_na_tabela_conta")
+            valores_sql.append("0")
+
         with self.conectar() as conn:
             cursor = conn.cursor()
             cursor.execute(
-            """
-            INSERT INTO saldo_injecoes (conta, valor, justificativa, analista, data_hora)
-            VALUES (?, ?, ?, ?, datetime('now', 'localtime'))
-            """,
-            (conta, valor, justificativa, analista),
-        )
+                f"""
+                INSERT INTO saldo_injecoes ({', '.join(campos)})
+                VALUES ({', '.join(valores_sql)})
+                """,
+                parametros,
+            )
             conn.commit()
             return int(cursor.lastrowid)
 

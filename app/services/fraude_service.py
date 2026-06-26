@@ -154,6 +154,20 @@ def inicializar_tabelas_fraude(conexao: Optional[sqlite3.Connection] = None) -> 
         )
         """
     )
+    conexao.execute(
+        """
+        CREATE TABLE IF NOT EXISTS analises_sla (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            transacao_id INTEGER NOT NULL UNIQUE,
+            status TEXT DEFAULT 'em_analise',
+            risco TEXT,
+            iniciado_em DATETIME DEFAULT CURRENT_TIMESTAMP,
+            resolvido_em DATETIME,
+            analista TEXT,
+            justificativa TEXT
+        )
+        """
+    )
 
     conexao.commit()
     if fechar:
@@ -273,10 +287,50 @@ def registrar_notificacao(
     )
 
 
-def conta_esta_bloqueada(conexao: sqlite3.Connection, conta: str) -> bool:
+def iniciar_sla_transacao(conexao: sqlite3.Connection, transacao_id: int, risco: str = "medio") -> None:
+    """Cria/atualiza o registro de SLA para transações que precisam de análise.
+
+    Essa integração garante que o endpoint POST /transacoes/ alimente o painel
+    GET /analista/sla quando a decisão final ficar pendente ou em análise.
+    """
     inicializar_tabelas_fraude(conexao)
+    conexao.execute(
+        """
+        INSERT INTO analises_sla (transacao_id, risco, status, iniciado_em)
+        VALUES (?, ?, 'em_analise', CURRENT_TIMESTAMP)
+        ON CONFLICT(transacao_id) DO UPDATE SET
+            risco = excluded.risco,
+            status = CASE
+                WHEN analises_sla.resolvido_em IS NULL THEN 'em_analise'
+                ELSE analises_sla.status
+            END,
+            iniciado_em = CASE
+                WHEN analises_sla.resolvido_em IS NULL THEN COALESCE(analises_sla.iniciado_em, CURRENT_TIMESTAMP)
+                ELSE analises_sla.iniciado_em
+            END
+        """,
+        (transacao_id, risco),
+    )
+
+
+def conta_esta_bloqueada(conexao: sqlite3.Connection, conta: str) -> bool:
+    """Retorna se a conta está bloqueada no estado atual.
+
+    Antes a função olhava qualquer transação antiga com status_conta = 'Bloqueada'.
+    Isso fazia uma conta continuar impedida mesmo depois do desbloqueio, porque uma
+    transação histórica bloqueada ainda existia no banco. Agora a tabela
+    contas_bloqueadas é a fonte principal; como apoio, só consideramos a última
+    transação da conta, não todo o histórico.
+    """
+    inicializar_tabelas_fraude(conexao)
+
     row = conexao.execute(
-        "SELECT id FROM contas_bloqueadas WHERE conta = ? AND status = 'Bloqueada'",
+        """
+        SELECT id
+        FROM contas_bloqueadas
+        WHERE conta = ? AND LOWER(COALESCE(status, '')) = 'bloqueada'
+        LIMIT 1
+        """,
         (conta,),
     ).fetchone()
     if row:
@@ -284,13 +338,23 @@ def conta_esta_bloqueada(conexao: sqlite3.Connection, conta: str) -> bool:
 
     row = conexao.execute(
         """
-        SELECT id FROM transactions
-        WHERE conta = ? AND status_conta = 'Bloqueada'
+        SELECT status_conta
+        FROM transactions
+        WHERE conta = ?
+        ORDER BY id DESC
         LIMIT 1
         """,
         (conta,),
     ).fetchone()
-    return row is not None
+    if not row:
+        return False
+
+    return str(row["status_conta"] or "").strip().lower() in {
+        "bloqueada",
+        "bloqueado",
+        "suspensa",
+        "suspenso",
+    }
 
 
 def buscar_transacao(conexao: sqlite3.Connection, transacao_id: int) -> Optional[dict]:
@@ -351,6 +415,9 @@ def atualizar_status_conta(conexao: sqlite3.Connection, conta: str, transacao_id
         SELECT classificacao_risco, COUNT(*) AS qtd
         FROM transactions
         WHERE conta = ?
+          AND LOWER(COALESCE(status_transacao, status, '')) IN (
+              'pendente', 'em análise', 'em_analise', 'em analise'
+          )
         GROUP BY classificacao_risco
         """,
         (conta,),
@@ -418,6 +485,8 @@ def processar_transacao(conexao: sqlite3.Connection, transacao_id: int) -> dict:
     transacao["status_transacao"] = status_transacao
 
     abrir_caso_analise(conexao, transacao, risco)
+    if risco["classificacao"] in {"amarelo", "vermelho"}:
+        iniciar_sla_transacao(conexao, transacao_id, risco["classe"])
     status_conta = atualizar_status_conta(conexao, str(transacao.get("conta")), transacao_id)
 
     if status_conta["bloqueio_automatico"]:
